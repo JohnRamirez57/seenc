@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model characters {
+  id                    Int                     @id @default(autoincrement())
+  media_id              Int
+  name                  String
+  description           String?
+  image_url             String?
+  character_appearances character_appearances[]
+  media                 media                   @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_character_media")
+}
+
+model media {
+  id            Int             @id @default(autoincrement())
+  title         String
+  media_type    media_type
+  description   String?
+  release_date  DateTime?       @db.Date
+  poster_url    String?
+  tmdb_id       Int?            @unique
+  isbn          String?
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
+  characters    characters[]
+  media_unit    media_unit[]
+  seasons       seasons[]
+  user_media    user_media[]
+  user_progress user_progress[]
+}
+
+model seasons {
+  id            Int          @id @default(autoincrement())
+  media_id      Int
+  season_number Int
+  overview      String?
+  poster_url    String?
+  media_unit    media_unit[]
+  media         media        @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_season_media")
+
+  @@unique([media_id, season_number])
+}
+
+model character_appearances {
+  character_id Int
+  unit_id      Int
+  characters   characters @relation(fields: [character_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appearances_charid")
+  media_unit   media_unit @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appearances_unid")
+
+  @@id([character_id, unit_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model events {
+  id          Int        @id @default(autoincrement())
+  unit_id     Int
+  description String
+  importance  Int        @db.SmallInt
+  media_unit  media_unit @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_events_unid")
+}
+
+model knowledge {
+  id         Int                @id @default(autoincrement())
+  unit_id    Int
+  category   knowledge_category
+  content    String
+  media_unit media_unit         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_knowledge_unit")
+}
+
+model media_unit {
+  id                    Int                     @id @default(autoincrement())
+  media_id              Int
+  season_id             Int?
+  unit_number           Int
+  unit_type             unit_type
+  title                 String
+  overview              String?
+  release_date          DateTime?               @db.Date
+  character_appearances character_appearances[]
+  events                events[]
+  knowledge             knowledge[]
+  media                 media                   @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_munit_media")
+  seasons               seasons?                @relation(fields: [season_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_unit_season")
+  questions             questions[]
+  user_progress         user_progress[]
+
+  @@unique([season_id, unit_number])
+}
+
+model questions {
+  id         Int        @id @default(autoincrement())
+  title      String?
+  user_id    Int
+  unit_id    Int
+  question   String
+  answer     String?
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  users      users      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_question_user")
+  media_unit media_unit @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_questions_unit")
+}
+
+model user_progress {
+  id              Int          @id @default(autoincrement())
+  user_id         Int?
+  media_id        Int
+  current_unit_id Int
+  last_viewed     DateTime     @default(now()) @db.Timestamptz(6)
+  status          watch_status
+  media           media        @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_progress_media")
+  media_unit      media_unit   @relation(fields: [current_unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_progress_unit")
+  users           users?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_progress_user")
+
+  @@unique([user_id, media_id])
+}
+
+model users {
+  id            Int             @id @default(autoincrement())
+  username      String          @unique
+  email         String          @unique
+  password_hash String
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  questions     questions[]
+  user_media    user_media[]
+  user_progress user_progress[]
+}
+
+model user_media {
+  user_id  Int
+  media_id Int
+  added_at DateTime @default(now()) @db.Timestamptz(6)
+  media    media    @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_media_media")
+  users    users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_media_user")
+
+  @@id([user_id, media_id])
+}
+
+enum knowledge_category {
+  EVENT
+  CHARACTER
+  RELATIONSHIP
+  LOCATION
+  MYSTERY
+  OBJECT
+}
+
+enum media_type {
+  TV
+  MOVIE
+  BOOK
+}
+
+enum unit_type {
+  EPISODE
+  CHAPTER
+  MOVIE
+}
+
+enum watch_status {
+  WATCHING
+  COMPLETED
+  PAUSED
+  DROPPED
+  PLAN_TO_WATCH
+}

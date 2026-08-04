@@ -1,0 +1,23 @@
+import { media_type } from "@prisma/client"
+import type { retrievedMedia, retrievedResult } from "../interfaces/media.interfaces"
+
+const posterImagePath = "https://image.tmdb.org/t/p/w500"
+const backupPoster = "https://placehold.net/400x600.png"
+
+function determineMediaType(mediaType: string){
+    mediaType = mediaType.toLocaleLowerCase();
+    if (mediaType === "tv") return media_type.TV;
+    if (mediaType === "movie") return media_type.MOVIE;
+    if (mediaType === "book") return media_type.BOOK;
+    throw new Error(`Unknown media type: ${mediaType}`);
+}
+
+export function formatMultiResults(data: retrievedMedia){
+    data.results = data.results.map((entry: retrievedResult) => (
+        {...entry, poster_path: entry.poster_path != null ? posterImagePath + entry.poster_path : backupPoster, media_type: determineMediaType(entry.media_type)}
+    ))
+}
+
+export function formatMovieResults(data: retrievedMedia){
+    formatMultiResults(data)
+}

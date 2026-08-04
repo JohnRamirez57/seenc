@@ -1,0 +1,30 @@
+@import "tailwindcss";
+body{
+  background-color: black;
+}
+
+@utility mediaBanner {
+    @apply bg-blue-600 text-white font-light m-auto p-1 transition-all duration-500 hover:bg-blue-700 hover:cursor-pointer hover:text-green-300;
+}
+
+@utility savedMediaEntry {
+  @apply hover:bg-red-600 hover:cursor-pointer hover:text-white hover:underline relative
+}
+
+.savedMediaDiv .savedMediaEntry::after {
+    content: "Remove";
+    position: absolute;
+    top: 70%;
+    left: 90%;
+    background: rgb(172, 172, 172);
+    padding: 4px 8px;
+    display: none;
+    color: black;
+    border-radius: 20%;
+    opacity: 100%;
+}
+
+.savedMediaDiv .savedMediaEntry:hover::after {
+    display: block;
+}
+
