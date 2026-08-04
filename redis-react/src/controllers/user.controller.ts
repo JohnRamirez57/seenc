@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { UserMediaService } from "../services/media.service.ts";
 import type { AxiosResponse } from "axios";
 import { handleError } from "../utils/error.util.ts";
-import type { userTable } from "../interfaces/user.interfaces.ts";
+import type { usersTable } from "../interfaces/prismaTables.interfaces.ts";
 import { PrismaService } from "../services/prisma.service.ts";
 
 class UserController {
@@ -45,7 +45,7 @@ class UserController {
     public linkAccount = async (req: Request, res: Response) => {
         try {
             const id: number = Number.parseInt(req.query.id as string)
-            const returnedUser: userTable | null = await this.prismaService.findUser(id)
+            const returnedUser: usersTable | null = await this.prismaService.findUser(id)
             res.json(returnedUser)
         } catch (error) {
             res.status(200).json({

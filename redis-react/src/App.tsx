@@ -145,22 +145,6 @@ function App() {
           <button className='bg-amber-200 hover:cursor-pointer' onClick={() => linkAccount(setCurrentUser, currentIDRef)}>{currentIDRef.current == null ? "Link Account" : "Unlink Account"}</button>
         </div>
       </div>
-      <div className='m-auto w-fit h-fit justify-center content-center bg-amber-100 grid'>
-        <h1 className='bg-amber-200 w-auto'>Add Show</h1>
-        <div className='grid m-auto w-fit h-fit'>
-          <label htmlFor='mediaTitle'>Title</label>
-          <input type='text' name='mediaTitle' id='mediaTitle' placeholder='Enter Media Name' />
-          <label htmlFor='mediaType'>Type</label>
-          <input type='text' name='mediaType' id='mediaType' placeholder='Enter Media Type' />
-          <label htmlFor='mediaDescription'>Description</label>
-          <input type='text' name='mediaDescription' id='mediaDescription' placeholder='Enter Media Description' />
-          <label htmlFor='media_release'>Release Date</label>
-          <input type='date' name='media_release' id='media_release' placeholder='Enter Media Release' />
-        </div>
-        {/* <button className='bg-amber-500 hover:border-amber-800 hover:cursor-pointer hover:border-2 m-auto' onClick={async () => {
-          addMedia(-1, currentIDRef.current)
-        }}>Add</button> */}
-      </div>
       <div className='mt-2 mb-2 m-auto w-fit h-fit grid justify-center bg-amber-200'>
         <h1>View Media</h1>
         <button onClick={() => viewMedia(updateUploaded, currentIDRef.current)} className='hover:bg-amber-300 bg-amber-100 cursor-pointer'>View</button>
@@ -172,7 +156,7 @@ function App() {
           )}
         </div>
       </div>
-      <button onClick={() => searchMedia("Evangelion", updateSearched)} className='bg-amber-50'>Search Evangelion</button>
+      <button onClick={() => searchMedia("Evangelion", updateSearched)} className='bg-amber-50 m-auto flex justify-center cursor-pointer'>Search Evangelion</button>
       <div className='mt-2 mb-2 m-auto w-fit h-fit grid justify-center bg-amber-200'>
         <h1>Search Movies!</h1>
         <input type='text' placeholder='Enter title here!' className='p-2' onChange={(e) => {updateCurrentSearch(e.target.value)}}/>
