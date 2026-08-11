@@ -2,12 +2,17 @@ import type { Request, Response } from "express";
 import { TMDBService } from "../services/tmdb.service.ts";
 import type { AxiosResponse } from "axios";
 import { formatMultiResults } from "../utils/format.util.ts";
-import type { retrievedMedia } from "../interfaces/media.interfaces.ts";
+import type { MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits } from "../interfaces/media.interfaces.ts";
 import { searchTMDBType, type searchFn } from "../interfaces/tmdb.interfaces.ts";
+import { handleError } from "../utils/error.util.ts";
+import { PrismaService } from "../services/prisma.service.ts";
 
 class TMDBController {
     private readonly tmdbService: TMDBService;
     private readonly extraPageNumber = 2;
+    private readonly profilePathing = "https://image.tmdb.org/t/p/"
+    private readonly profileSize = "original"
+    private readonly prismaClient = new PrismaService;
 
     constructor(){
         this.tmdbService = new TMDBService();
@@ -57,6 +62,21 @@ class TMDBController {
             res.status(500).json({
                 error: "Failed to search media"
             });
+        }
+    }
+
+    public getMovieCredits = async (req: Request, res: Response) => {
+        try {
+            const movieId = req.query.tmdb_id as unknown as number;
+            const returnedCredits: AxiosResponse<retrievedMovieCredits> = await this.tmdbService.getMovieCredits(movieId)
+            returnedCredits.data.cast.forEach((entry: MovieCredit) => entry.profile_path = `${this.profilePathing}${this.profileSize}${entry.profile_path}`)
+            this.prismaClient.checkCastCharacterMedia(movieId, returnedCredits.data.cast)
+            res.json(returnedCredits.data.cast)
+        } catch (error) {
+            console.error(error)
+            res.status(200).json({
+                error: handleError(error)
+            })
         }
     }
 }

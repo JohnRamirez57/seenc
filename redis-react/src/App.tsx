@@ -99,6 +99,11 @@ const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList:
       const payload = {...desiredMedia, user_id: currentUserID}
       const { popularity, ...mediaData } = payload
       await axios.post(`${apiBaseUrl}/media/add`, mediaData )
+      console.log(await axios.get(`${apiBaseUrl}/tmdb/credits`, {
+        params: {
+          tmdb_id: tmdbID
+        }
+      }))
     } catch (err) {
       // console.log("Error in addMedia function!")
       console.error(err)

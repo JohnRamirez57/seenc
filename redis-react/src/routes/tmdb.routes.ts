@@ -1,7 +1,8 @@
 import { tmdbController } from "../controllers/tmdb.controller.ts";
 import {
   validateQuery,
-  searchQuerySchema
+  searchQuerySchema,
+  getCreditsSchema
 } from "../../middleware/joiValidation.ts";
 
 
@@ -11,5 +12,6 @@ const router = express.Router();
 router.get("/tv", validateQuery(searchQuerySchema), tmdbController.searchQuery)
 router.get("/movie", validateQuery(searchQuerySchema), tmdbController.searchQuery)
 router.get("/media", validateQuery(searchQuerySchema), tmdbController.searchQuery)
+router.get("/credits", validateQuery(getCreditsSchema), tmdbController.getMovieCredits)
 
     export default router;

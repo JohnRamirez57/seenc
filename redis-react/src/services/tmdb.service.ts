@@ -7,6 +7,7 @@ export class TMDBService {
     private readonly getMovieDetailsURL = "https://api.themoviedb.org/3/movie/"
     private readonly searchTVURL = "https://api.themoviedb.org/3/search/tv"
     private readonly searchMultiURL = "https://api.themoviedb.org/3/search/multi"
+    private readonly getMovieCreditsURL = `/credits` // getMovieDetails + ${movie_id} + getMovieCreditsURL
 
     public async searchMedia(query: any, pageNumber: number = 1) {
         const cleanParams: searchParams = createSearchParamsObject(query, pageNumber);
@@ -26,5 +27,13 @@ export class TMDBService {
     public async getMovieDetails(params: detailsParams){
         const {tmdb_id, ...info} = params;
         return axios.get(`${this.getMovieDetailsURL}${tmdb_id}`, {params: info })
+    }
+
+    public async getMovieCredits(movieId: number) {
+        return axios.get(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, {
+            params: {
+                api_key: process.env.TMDBKEY
+            }
+        })
     }
 }

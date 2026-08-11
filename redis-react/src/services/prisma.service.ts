@@ -1,4 +1,5 @@
-import type { newMediaParams } from "../interfaces/media.interfaces";
+import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces";
+import type { characterParams } from "../interfaces/prismaTables.interfaces";
 import { prisma } from "../prismaClient/prisma";
 
 export class PrismaService {
@@ -65,6 +66,96 @@ export class PrismaService {
                 media: {
                     tmdb_id: tmdbId
                 }
+            }
+        })
+    }
+
+    public findCharacterMedia = async (media_id: number, actor_id: number) => {
+        return prisma.characters.findMany({
+            where: {
+                media_id: media_id,
+                actor_id: actor_id
+            }
+        })
+    }
+
+    public createCharacterMedia = async (params: characterParams) => {
+        return prisma.characters.create({
+            data: {
+                media_id: params.media_id,
+                name: params.name,
+                description: params.description,
+                image_url: params.image_url,
+                actor_id: params.actor_id,
+                credit_id: params.credit_id
+            }
+        });
+    };
+
+    public checkCastCharacterMedia = async (
+        tmdb_id: number,
+        cast: MovieCredit[]
+    ) => {
+        const media = await this.findMedia(Number(tmdb_id))
+
+        if (!media) {
+            throw new Error(
+                `Media with TMDB ID ${tmdb_id} was not found in the database.`
+            );
+        }
+
+        const existingCastCharacterMedia = await prisma.characters.findMany({
+            where: {
+                media_id: media.id
+            }
+        });
+
+        const existingMediaActorID = new Set<number>(
+            existingCastCharacterMedia.map(
+                (character) => character.actor_id
+            )
+        );
+
+        const newCast: MovieCredit[] = cast.filter(
+            (actor) => !existingMediaActorID.has(actor.id)
+        );
+
+        if (newCast.length === 0) {
+            console.log("No new characters to add.");
+            return;
+        }
+
+        const characterPromises = newCast.map(
+            (actorCredit: MovieCredit) => {
+                const createCharacterParams: characterParams = {
+                    media_id: media.id,
+                    name: actorCredit.character,
+                    description: actorCredit.name,
+                    image_url: actorCredit.profile_path,
+                    actor_id: actorCredit.id,
+                    credit_id: actorCredit.credit_id
+                };
+
+                return this.createCharacterMedia(
+                    createCharacterParams
+                );
+            }
+        );
+
+        await Promise.allSettled(characterPromises);
+
+        console.log(
+            `Added ${newCast.length} new character(s) to media ${media.id}.`
+        );
+    };
+
+    public getCharacterMedias = async (media_id: number) => {
+        return prisma.characters.findMany({
+            where: {
+                media_id: Number(media_id)
+            },
+            select: {
+                name: true
             }
         })
     }

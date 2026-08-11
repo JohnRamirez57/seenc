@@ -42,6 +42,9 @@ export const searchQuerySchema = Joi.object({
     searchType: Joi.string().min(1).required()
 })
 
+export const getCreditsSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required()
+})
 
 export const getUserSchema = Joi.object({
     id: Joi.string().min(1).required()

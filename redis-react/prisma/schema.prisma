@@ -12,6 +12,8 @@ model characters {
   name                  String
   description           String?
   image_url             String?
+  actor_id              Int
+  credit_id             String
   character_appearances character_appearances[]
   media                 media                   @relation(fields: [media_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_character_media")
 }
