@@ -83,6 +83,7 @@ model media_unit {
   title                 String
   overview              String?
   release_date          DateTime?               @db.Date
+  tmdb_id               Int
   character_appearances character_appearances[]
   events                events[]
   knowledge             knowledge[]

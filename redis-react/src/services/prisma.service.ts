@@ -1,5 +1,5 @@
 import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces";
-import type { characterParams } from "../interfaces/prismaTables.interfaces";
+import type { characterParams, mediaUnitParams } from "../interfaces/prismaTables.interfaces";
 import { prisma } from "../prismaClient/prisma";
 
 export class PrismaService {
@@ -160,13 +160,28 @@ export class PrismaService {
         })
     }
 
-    public addTVSeason = async (media_id: number, season_number: number, overview: string = "", poster_url: string) => {
+    public createTVSeason = async (media_id: number, season_number: number, overview: string = "", poster_url: string) => {
         return prisma.seasons.create({
             data: {
                 media_id: media_id,
                 season_number: season_number,
                 overview: overview,
                 poster_url: poster_url
+            }
+        })
+    }
+
+    public createMediaUnit = async (muParams: mediaUnitParams) => {
+        return prisma.media_unit.create({
+            data: {
+                media_id: muParams.media_id,
+                season_id: muParams.season_id,
+                unit_number: muParams.unit_number,
+                unit_type: muParams.unit_type,
+                title: muParams.title,
+                overview: muParams.overview,
+                release_date: muParams.release_date,
+                tmdb_id: muParams.tmdb_id
             }
         })
     }
