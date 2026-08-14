@@ -13,5 +13,6 @@ router.get("/tv", validateQuery(searchQuerySchema), tmdbController.searchQuery)
 router.get("/movie", validateQuery(searchQuerySchema), tmdbController.searchQuery)
 router.get("/media", validateQuery(searchQuerySchema), tmdbController.searchQuery)
 router.get("/credits", validateQuery(getCreditsSchema), tmdbController.getMovieCredits)
+router.get("/details", validateQuery(getCreditsSchema), tmdbController.getTVDetails)
 
     export default router;

@@ -18,6 +18,18 @@ export function formatMultiResults(data: retrievedMedia){
     ))
 }
 
+export function formatPosterPathing(data: any) {
+    if (typeof data === "object"){
+        fixPosterPathing(data)
+    } else {
+        data.map((entry: any) => fixPosterPathing(entry))
+    }
+}
+
+function fixPosterPathing(data: any) {
+    data.poster_path = posterImagePath + data.poster_path;
+}
+
 export function formatMovieResults(data: retrievedMedia){
     formatMultiResults(data)
 }

@@ -7,6 +7,8 @@ export class TMDBService {
     private readonly getMovieDetailsURL = "https://api.themoviedb.org/3/movie/"
     private readonly searchTVURL = "https://api.themoviedb.org/3/search/tv"
     private readonly searchMultiURL = "https://api.themoviedb.org/3/search/multi"
+    private readonly getTVDetailsURL = "https://api.themoviedb.org/3/tv/"
+    private readonly getSeasonDetailsURL = "https://api.themoviedb.org/3/tv/%d/season/%d"
     private readonly getMovieCreditsURL = `/credits` // getMovieDetails + ${movie_id} + getMovieCreditsURL
 
     public async searchMedia(query: any, pageNumber: number = 1) {
@@ -31,6 +33,23 @@ export class TMDBService {
 
     public async getMovieCredits(movieId: number) {
         return axios.get(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, {
+            params: {
+                api_key: process.env.TMDBKEY
+            }
+        })
+    }
+
+    public async getTVDetails(tmdb_id: number) {
+        return axios.get(`${this.getTVDetailsURL}${tmdb_id}`, {
+            params: {
+                api_key: process.env.TMDBKEY
+            }
+        })
+    }
+
+    public async getSeasonDetails(tmdb_id: number, season_number: number) {
+        const url = this.getSeasonDetailsURL.replace("%d", String(tmdb_id)).replace("%d", String(season_number));
+        return axios.get(`${url}`, {
             params: {
                 api_key: process.env.TMDBKEY
             }

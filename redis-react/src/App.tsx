@@ -95,15 +95,24 @@ const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList:
       console.log("Error, media not found!");
       return;
     }
+    const type = desiredMedia.media_type;
     try { 
       const payload = {...desiredMedia, user_id: currentUserID}
       const { popularity, ...mediaData } = payload
       await axios.post(`${apiBaseUrl}/media/add`, mediaData )
-      console.log(await axios.get(`${apiBaseUrl}/tmdb/credits`, {
-        params: {
-          tmdb_id: tmdbID
-        }
-      }))
+      if (type === "MOVIE"){
+        console.log(await axios.get(`${apiBaseUrl}/tmdb/credits`, {
+          params: {
+            tmdb_id: tmdbID
+          }
+        }))
+      } else if (type === "TV"){
+        console.log(await axios.get(`${apiBaseUrl}/tmdb/details`, {
+          params: {
+            tmdb_id: Number(tmdbID)
+          }
+        }))
+      }
     } catch (err) {
       // console.log("Error in addMedia function!")
       console.error(err)

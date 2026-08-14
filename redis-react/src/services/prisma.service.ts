@@ -159,5 +159,16 @@ export class PrismaService {
             }
         })
     }
+
+    public addTVSeason = async (media_id: number, season_number: number, overview: string = "", poster_url: string) => {
+        return prisma.seasons.create({
+            data: {
+                media_id: media_id,
+                season_number: season_number,
+                overview: overview,
+                poster_url: poster_url
+            }
+        })
+    }
 }
 

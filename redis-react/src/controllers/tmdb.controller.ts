@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { TMDBService } from "../services/tmdb.service.ts";
 import type { AxiosResponse } from "axios";
-import { formatMultiResults } from "../utils/format.util.ts";
-import type { MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits } from "../interfaces/media.interfaces.ts";
+import { formatMultiResults, formatPosterPathing } from "../utils/format.util.ts";
+import type { MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
 import { searchTMDBType, type searchFn } from "../interfaces/tmdb.interfaces.ts";
 import { handleError } from "../utils/error.util.ts";
 import { PrismaService } from "../services/prisma.service.ts";
@@ -72,6 +72,21 @@ class TMDBController {
             returnedCredits.data.cast.forEach((entry: MovieCredit) => entry.profile_path = `${this.profilePathing}${this.profileSize}${entry.profile_path}`)
             this.prismaClient.checkCastCharacterMedia(movieId, returnedCredits.data.cast)
             res.json(returnedCredits.data.cast)
+        } catch (error) {
+            console.error(error)
+            res.status(200).json({
+                error: handleError(error)
+            })
+        }
+    }
+
+    public getTVDetails = async (req: Request, res: Response) => {
+        try {
+            const tvID: number = Number(req.query.tmdb_id as unknown);
+            const returnedTVDetails: AxiosResponse<TVDetails> = await this.tmdbService.getTVDetails(tvID)
+            formatPosterPathing(returnedTVDetails.data)
+            formatPosterPathing(returnedTVDetails.data.seasons)
+            res.json(returnedTVDetails.data)
         } catch (error) {
             console.error(error)
             res.status(200).json({
