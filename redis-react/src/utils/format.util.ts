@@ -27,7 +27,8 @@ export function formatPosterPathing(data: any) {
 }
 
 function fixPosterPathing(data: any) {
-    data.poster_path = posterImagePath + data.poster_path;
+    data.poster_path &&= posterImagePath + data.poster_path;
+    data.still_path &&= posterImagePath + data.still_path;
 }
 
 export function formatMovieResults(data: retrievedMedia){

@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { TMDBService } from "../services/tmdb.service.ts";
 import type { AxiosResponse } from "axios";
 import { formatMultiResults, formatPosterPathing } from "../utils/format.util.ts";
-import type { MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
+import type { EpisodeDetails, MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
 import { searchTMDBType, type searchFn } from "../interfaces/tmdb.interfaces.ts";
 import { handleError } from "../utils/error.util.ts";
 import { PrismaService } from "../services/prisma.service.ts";
@@ -87,6 +87,31 @@ class TMDBController {
             formatPosterPathing(returnedTVDetails.data)
             formatPosterPathing(returnedTVDetails.data.seasons)
             res.json(returnedTVDetails.data)
+        } catch (error) {
+            console.error(error)
+            res.status(200).json({
+                error: handleError(error)
+            })
+        }
+    }
+
+    public getTVEpisodeDetails = async (req: Request, res: Response) => {
+        try {
+            const { tmdb_id, season_number, episode_number } = req.query;
+            const returnedEpisodeDetails: AxiosResponse<EpisodeDetails> = await this.tmdbService.getEpisodeDetails(Number(tmdb_id), Number(season_number), Number(episode_number))
+            formatPosterPathing(returnedEpisodeDetails.data)
+            res.json(returnedEpisodeDetails.data)
+        } catch (error) {
+            console.error(error)
+            res.status(200).json({
+                error: handleError(error)
+            })
+        }
+    }
+
+    public getAllSeasonEpisodesDetails = async (req: Request, res: Response) => {
+        try {
+            
         } catch (error) {
             console.error(error)
             res.status(200).json({

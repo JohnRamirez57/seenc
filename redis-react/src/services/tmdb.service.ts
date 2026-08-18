@@ -70,7 +70,7 @@ export class TMDBService {
         })
     }
 
-    public async getEpisodeDetails(tmdb_id: number, season_number: number, episode_number: number): Promise<EpisodeDetails>{
+    public async getEpisodeDetails(tmdb_id: number, season_number: number, episode_number: number): Promise<AxiosResponse>{
         const url = this.getTVEpisodeDetailsURL.replace("{series_id}", String(tmdb_id)).replace("{season_number}", String(season_number)).replace("{episode_number}", String(episode_number))
         return axios.get(`${url}`, {
             params: {
