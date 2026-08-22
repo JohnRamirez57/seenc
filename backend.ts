@@ -1,8 +1,8 @@
 import "dotenv/config";
 import express from "express";
-import tmdbRoutes from "./redis-react/src/routes/tmdb.routes";
-import userRoutes from "./redis-react/src/routes/user.routes";
-import mediaRoutes from "./redis-react/src/routes/media.routes";
+import tmdbRoutes from "./seencFE/src/routes/tmdb.routes"
+import userRoutes from "./seencFE/src/routes/user.routes"
+import mediaRoutes from "./seencFE/src/routes/media.routes"
 
 const app = express();
 
