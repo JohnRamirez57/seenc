@@ -1,15 +1,40 @@
 import type { Request, Response } from "express";
 import type { addMediaParams } from "../interfaces/media.interfaces.ts";
-import { MediaService, UserMediaService } from "../services/media.service.ts";
+import { MediaService, MediaUnitService, UserMediaService } from "../services/media.service.ts";
 import { handleError } from "../utils/error.util.ts";
+import { TMDBService } from "../services/tmdb.service.ts";
+import type { AxiosResponse } from "axios";
 
 class MediaController {
     private readonly mediaService: MediaService;
     private readonly userMediaService: UserMediaService;
+    private readonly mediaUnitService: MediaUnitService;
+    private readonly tmdbService: TMDBService;
 
     constructor() {
         this.mediaService = new MediaService();
-        this.userMediaService = new UserMediaService()
+        this.userMediaService = new UserMediaService();
+        this.mediaUnitService = new MediaUnitService();
+        this.tmdbService = new TMDBService();
+    }
+
+    public addMediaUnits = async (req: Request, res: Response) => {
+        try {
+            const tmdb_id = Number(req.body.tmdb_id)
+            const season_number = req.body?.season_number || 1;
+            const seasonDetails = (await this.tmdbService.getSeasonDetails(tmdb_id, season_number)).data;
+            const episodes: PromiseFulfilledResult<AxiosResponse>[] = await this.tmdbService.getSeasonEpisodesDetails(tmdb_id, season_number, seasonDetails.episodes.length, Number(req.body?.startingEpisode || 1))
+
+            const episodesData = episodes.map((entry) => entry.value.data)
+            await this.mediaUnitService.createMultipleMediaUnits(episodesData)
+            
+            res.status(201).json({message: "Successfully added media units!"})
+
+        } catch (error) {
+            res.status(500).json({
+                error: handleError(error),
+            });
+        }
     }
 
     public addMedia = async (req: Request, res: Response) => {

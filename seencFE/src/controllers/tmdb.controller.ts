@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { TMDBService } from "../services/tmdb.service.ts";
 import type { AxiosResponse } from "axios";
-import { formatMultiResults, formatPosterPathing } from "../utils/format.util.ts";
+import { extractSuccessfulResponses, formatMultiResults, formatPosterPathing } from "../utils/format.util.ts";
 import type { EpisodeDetails, MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
 import { searchTMDBType, type searchFn } from "../interfaces/tmdb.interfaces.ts";
 import { handleError } from "../utils/error.util.ts";
@@ -110,8 +110,16 @@ class TMDBController {
     }
 
     public getAllSeasonEpisodesDetails = async (req: Request, res: Response) => {
-        try {
+        try { // getSeasonEpisodesDetails
+            const tmdb_id = Number(req.query.tmdb_id);
+            const season_number = Number(req.query.season_number);
+            const specificSeason = await this.tmdbService.getSeasonDetails(tmdb_id, season_number)
             
+            if (specificSeason.status !== 200) throw new Error("Season not found!")
+
+            const episodeDetails: PromiseFulfilledResult<AxiosResponse>[] = await this.tmdbService.getSeasonEpisodesDetails(tmdb_id, season_number, specificSeason.data.episodes.length, Number(req.query?.startingEpisode || 1))
+
+            res.json(episodeDetails.map(result => result.value.data))
         } catch (error) {
             console.error(error)
             res.status(200).json({

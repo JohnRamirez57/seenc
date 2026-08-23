@@ -2,6 +2,7 @@ import axios, { type AxiosResponse } from 'axios';
 import type { detailsParams, EpisodeDetails, searchParams } from '../interfaces/media.interfaces.ts';
 import { createSearchParamsObject } from '../utils/param.util.ts';
 import { TokenBucket } from "../apiBucket/Bucket.ts"
+import { extractSuccessfulResponses } from '../utils/format.util.ts';
 
 export class TMDBService {
     private readonly searchMovieURL = "https://api.themoviedb.org/3/search/movie"
@@ -79,12 +80,25 @@ export class TMDBService {
         })
     }
 
+    public async getTMDBByEpisodeID(episode_id: number, season_num: number, ) {
+        const episodeDetails = await axios.get(`${this.getTVDetailsURL}`, {
+            params: {
+                api_key: process.env.TMDBKEY
+            }
+        })
+    }
+
     public async getSeasonEpisodesDetails(tmdb_id: number, season_number: number, max_episodes: number, starting_number: number = 1) {
         const preformattedURL = this.getTVEpisodeDetailsURL.replace("{series_id}", String(tmdb_id)).replace("{season_number}", String(season_number))
         const seasonEpisodeURLS: string[] = [];
         for (let episode_number = starting_number; episode_number <= max_episodes; episode_number++){
             seasonEpisodeURLS.push(preformattedURL.replace("{episode_number}", String(episode_number)))
         }
-        return Promise.allSettled(seasonEpisodeURLS.map((URL: string) => this.makeTMDBRequest(URL, {api_key: process.env.TMDBKEY})))
+        let validEpisodes = extractSuccessfulResponses(await Promise.allSettled(seasonEpisodeURLS.map((URL: string) => this.makeTMDBRequest(URL, {api_key: process.env.TMDBKEY}))))
+        validEpisodes.forEach(result => {
+            result.value.data.tmdb_id = tmdb_id;
+        });
+
+        return validEpisodes
     }
 }

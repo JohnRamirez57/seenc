@@ -7,12 +7,13 @@ import {
 
 
 import express from 'express';
-const router = express.Router();
+import tvRouter from "./tv.routes.ts";
+const tmbmRouter = express.Router({ mergeParams: true });
 
-router.get("/tv", validateQuery(searchQuerySchema), tmdbController.searchQuery)
-router.get("/movie", validateQuery(searchQuerySchema), tmdbController.searchQuery)
-router.get("/media", validateQuery(searchQuerySchema), tmdbController.searchQuery)
-router.get("/credits", validateQuery(getCreditsSchema), tmdbController.getMovieCredits)
-router.get("/details", validateQuery(getCreditsSchema), tmdbController.getTVDetails)
+tmbmRouter.use("/tv", tvRouter)
 
-    export default router;
+tmbmRouter.get("/movie", validateQuery(searchQuerySchema), tmdbController.searchQuery)
+tmbmRouter.get("/media", validateQuery(searchQuerySchema), tmdbController.searchQuery)
+tmbmRouter.get("/credits", validateQuery(getCreditsSchema), tmdbController.getMovieCredits)
+
+export default tmbmRouter;

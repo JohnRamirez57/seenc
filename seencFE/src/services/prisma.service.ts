@@ -1,9 +1,12 @@
 import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces";
-import type { characterParams, mediaUnitParams } from "../interfaces/prismaTables.interfaces";
+// import type { characterParams, mediaUnitParams } from "../interfaces/media.interfaces.ts";
 import { prisma } from "../prismaClient/prisma";
+import { formatPosterPathing } from "../utils/format.util";
+import { TMDBService } from "./tmdb.service";
 
 export class PrismaService {
     private readonly prismaClient = prisma;
+    private readonly tmdbService = new TMDBService();
 
     public findUser = async (userId: number) => {
         return this.prismaClient.users.findUnique({
@@ -79,7 +82,7 @@ export class PrismaService {
         })
     }
 
-    public createCharacterMedia = async (params: characterParams) => {
+    public createCharacterMedia = async (params: any) => {
         return prisma.characters.create({
             data: {
                 media_id: params.media_id,
@@ -127,7 +130,7 @@ export class PrismaService {
 
         const characterPromises = newCast.map(
             (actorCredit: MovieCredit) => {
-                const createCharacterParams: characterParams = {
+                const createCharacterParams: any = {
                     media_id: media.id,
                     name: actorCredit.character,
                     description: actorCredit.name,
@@ -171,7 +174,59 @@ export class PrismaService {
         })
     }
 
-    public createMediaUnit = async (muParams: mediaUnitParams) => {
+    public createTVSeasonByTMDB = async (tmdb_id: number, season_number: number) => {
+        const media = await this.findMedia(tmdb_id);
+        if (!media) throw new Error("Error finding media!")
+        const TVSeriesDetails = await this.tmdbService.getTVDetails(tmdb_id)
+        const seasonDetails = await this.tmdbService.getSeasonDetails(tmdb_id, season_number)
+        if (!TVSeriesDetails || !seasonDetails) throw new Error("Error retrieving TV details!")
+        return await this.createTVSeason(media.id, season_number, TVSeriesDetails.data.overview, formatPosterPathing(seasonDetails?.data?.episodes[0]?.still_path || "")!)
+    }
+
+    public findTVSeason = async (media_id: number, season_number: number) => {
+        return prisma.seasons.findFirst({
+            where: {
+                media_id: media_id,
+                season_number: season_number
+            }
+        })
+    }
+
+    // public getOrCreateTVMediaUnitBySeason = async (tmdb_id: number, season_number: number) => {
+    //     const specificMedia = (await prisma.media.findFirst({
+    //         where: {
+    //             tmdb_id: tmdb_id
+    //         }
+    //     }))
+    //     if (!specificMedia) throw new Error("No Media Found!")
+    //     // console.error("Specific Media: ", specificMedia)
+    //     // console.error("Specific Season: ", season_number)
+    //     let specificSeason = await this.findTVSeason(specificMedia.id, season_number)
+    //     if (!specificSeason) {
+    //         let details = (await this.tmdbService.getSeasonDetails(tmdb_id, season_number))
+    //         if (details.status != 200) throw new Error("Error getting season details!")
+    //         specificSeason = await this.createTVSeason(specificMedia.id, season_number, details.data.overview, details.data.poster_url)
+    //     }
+    //     // let TVMediaUnit = await prisma.media_unit.findFirst({
+    //     //     where: {
+    //     //         tmdb_id: tmdb_id,
+    //     //         season_id: specificSeason.id
+    //     //     }
+    //     // })
+    //     // TVMediaUnit ??= await this.createMediaUnit({
+    //     //         media_id: specificMedia.id,
+    //     //         season_id: specificSeason.id,
+    //     //         unit_number: season_number,
+    //     //         unit_type: unit_type.EPISODE,
+    //     //         title: specificMedia.title,
+    //     //         overview: specificSeason.overview,
+    //     //         release_date: specificMedia.release_date,
+    //     //         tmdb_id: specificMedia.tmdb_id
+    //     //     })
+    //     return TVMediaUnit;
+    // }
+
+    public createMediaUnit = async (muParams: any) => {
         return prisma.media_unit.create({
             data: {
                 media_id: muParams.media_id,

@@ -8,8 +8,10 @@ export function validateBody(schema: Joi.ObjectSchema) {
         next: NextFunction
     ) => {
         const { error } = schema.validate(req.body);
+        console.error("Body Params: ", req.body)
         // console.log("Error: ", error)
         if (error) {
+            console.error(error.details[0].message)
             return res.status(400).json({
                 error: error.details[0].message
             });
@@ -28,6 +30,8 @@ export function validateQuery(schema: Joi.ObjectSchema) {
         const { error } = schema.validate(req.query);
 
         if (error) {
+            console.error(error.details[0].message)
+
             return res.status(400).json({
                 error: "error.details[0].message"
             });
@@ -48,6 +52,17 @@ export const getDetailsSchema = Joi.object({
 
 export const getCreditsSchema = Joi.object({
     tmdb_id: Joi.number().integer().min(0).required()
+})
+
+export const getSeasonEpisodesSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    season_number: Joi.number().integer().min(0).required(),
+    starting_number: Joi.number().integer().min(0)
+})
+
+export const addMediaUnitsSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    season_number: Joi.number().integer().min(0),
 })
 
 export const getUserSchema = Joi.object({

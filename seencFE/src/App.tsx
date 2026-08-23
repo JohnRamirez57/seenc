@@ -6,6 +6,7 @@ import { useRef } from 'react'
 import type {retrievedMedia, retrievedResult, movieOrTvResult} from "./interfaces/media.interfaces.ts"
 import type { savedEntry } from './interfaces/user.interfaces.ts'
 import { searchTMDBType } from './interfaces/tmdb.interfaces.ts'
+import { formatMediaResult } from './utils/format.util.ts'
 
 
 const viewMedia = async (updateUploaded: Dispatch<SetStateAction<savedEntry[]>>, currentIDRef: number | null) => { //RefObject<number | null>
@@ -36,17 +37,7 @@ const searchMedia = async (searchUp: string, updateSearched: Dispatch<SetStateAc
       }
       ).then((res) => res.data)
       // console.log(resp);
-      const filteredResults: movieOrTvResult[] = resp.results.map((entry: retrievedResult) => ({
-        title: entry.title ?? entry.name ?? "Untitled",
-        poster_url: entry?.poster_path,
-        tmdb_id: entry.id,
-        description: entry.overview,
-        media_type: entry.media_type,
-        release_date: entry?.release_date ? new Date(entry.release_date) : entry?.first_air_date ? new Date(entry.first_air_date) : new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
-        popularity: entry.popularity
-      })).toSorted((a: movieOrTvResult, b: movieOrTvResult) => b.popularity - a.popularity);
+      const filteredResults: movieOrTvResult[] = formatMediaResult(resp)
       // console.log(filteredResults)
       updateSearched(filteredResults)
     } catch (error) {
@@ -99,7 +90,7 @@ const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList:
     try { 
       const payload = {...desiredMedia, user_id: currentUserID}
       const { popularity, ...mediaData } = payload
-      await axios.post(`${apiBaseUrl}/media/add`, mediaData )
+      await axios.post(`${apiBaseUrl}/data/add/media`, mediaData )
       if (type === "MOVIE"){
         console.log(await axios.get(`${apiBaseUrl}/tmdb/credits`, {
           params: {
@@ -107,11 +98,18 @@ const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList:
           }
         }))
       } else if (type === "TV"){
-        console.log(await axios.get(`${apiBaseUrl}/tmdb/details`, {
+        console.log(await axios.get(`${apiBaseUrl}/tmdb/tv/details`, {
           params: {
             tmdb_id: Number(tmdbID)
           }
         }))
+        console.log(await axios.get(`${apiBaseUrl}/tmdb/tv/seasonEpisodesInfo`, {
+          params: {
+            tmdb_id: tmdbID,
+            season_number: 1,
+          }
+        }))
+        console.log(await axios.post(`${apiBaseUrl}/data/add/mediaUnits`, {tmdb_id: tmdbID}))
       }
     } catch (err) {
       // console.log("Error in addMedia function!")
