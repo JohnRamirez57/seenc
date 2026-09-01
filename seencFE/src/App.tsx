@@ -1,33 +1,38 @@
-import { useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import axios from 'axios'
 import { apiBaseUrl } from './config.ts'
 import './App.css'
-import { useRef } from 'react'
-import type {retrievedMedia, retrievedResult, movieOrTvResult} from "./interfaces/media.interfaces.ts"
+import { useDispatch, useSelector } from 'react-redux'
+import type {retrievedMedia, movieOrTvResult} from "./interfaces/media.interfaces.ts"
 import type { savedEntry } from './interfaces/user.interfaces.ts'
 import { searchTMDBType } from './interfaces/tmdb.interfaces.ts'
 import { formatMediaResult } from './utils/format.util.ts'
+import type { RootState } from './toolkit/store/store.ts'
+import { removeFromSavedMedia, renewSavedMedia, updateSearchedMedia } from './toolkit/slices/mediaSlice.ts'
+import { ToolkitManager } from './toolkit/toolkitManager/toolkitClass.ts'
 
+const tkManager = new ToolkitManager()
+const dispatch = useDispatch();
+const viewMedia = async () => { //RefObject<number | null>
+  const auth = tkManager.getState("auth");
+  const userID = auth.user?.id;
+  if (!auth.isAuthenticated) return new Error("User session expired. Please log in!")
+  if (!userID) return new Error("Error retrieving user id for saved media!")
 
-const viewMedia = async (updateUploaded: Dispatch<SetStateAction<savedEntry[]>>, currentIDRef: number | null) => { //RefObject<number | null>
-  if (currentIDRef == null){
-    console.log("No User ID Linked. ")
-    return;
-  }
   try {
     const resp = await axios.get(`${apiBaseUrl}/user/getMedia`, {
       params: {
-        userID: currentIDRef
+        userID: userID
       }
     });
-    updateUploaded(resp.data)
+    tkManager.updateState(renewSavedMedia, resp.data);
   } catch (error) {
     console.error(error)
     //updateUploaded(JSON.stringify(error));
   }
 }
 
-const searchMedia = async (searchUp: string, updateSearched: Dispatch<SetStateAction<movieOrTvResult[]>>, searchType: string = searchTMDBType.MULTI) => {
+const searchMedia = async (searchUp: string, searchType: string = searchTMDBType.MULTI) => {
     try {
       const resp: retrievedMedia = await axios.get(`${apiBaseUrl}/tmdb/media`, {
         params: {
@@ -39,22 +44,16 @@ const searchMedia = async (searchUp: string, updateSearched: Dispatch<SetStateAc
       // console.log(resp);
       const filteredResults: movieOrTvResult[] = formatMediaResult(resp)
       // console.log(filteredResults)
-      updateSearched(filteredResults)
+      tkManager.updateState(updateSearchedMedia, filteredResults)
     } catch (error) {
-    if (axios.isAxiosError(error)) {
-      updateSearched(error.response?.data ?? error.message);
-    } else if (error instanceof Error) {
-      console.log([error.message]);
-    } else {
-      console.log([String(error)]);
-    }
+      console.error(error)
   }
 }
 
-const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>, setCurrentUser: Dispatch<SetStateAction<string>>) => {
+const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
   e.preventDefault()
   const formElement = e.currentTarget.form;
-  if (!formElement) {console.error("Form not found!"); setCurrentUser("Error"); return;}
+  if (!formElement) {console.error("Form not found!"); return;}
   const formData = new FormData(formElement);
   const username = formData.get("loginUsernameField") as string;
   const password = formData.get("loginPasswordField") as string;
@@ -67,11 +66,9 @@ const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>, setCurrentUse
 
   if (!user) {
     console.error("User not found!");
-    setCurrentUser("User Not Found")
     return;
   }
   formElement?.reset()
-  setCurrentUser(`${user.data?.username  || "Stranger"}`)
 }
 
 const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -99,20 +96,22 @@ const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
   // console.log(JSON.stringify(user.data))
 }
 
-const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList: movieOrTvResult[]) => {
-    if (currentUserID == null){
+const addMedia = async (tmdbID: number) => {
+    const auth = tkManager.getState('auth')
+    const media: movieOrTvResult[] = tkManager.getState("media").searchedMedia;
+    if (auth.user?.id == null){
       console.log("No User ID Found");
       return;
     }
     // console.log(tmdbID)
-    const desiredMedia: movieOrTvResult | undefined = mediaList.find((entry) => entry.tmdb_id == tmdbID)
+    const desiredMedia: movieOrTvResult | undefined = media.find((entry) => entry.tmdb_id == tmdbID)
     if (!desiredMedia){
       console.log("Error, media not found!");
       return;
     }
     const type = desiredMedia.media_type;
     try { 
-      const payload = {...desiredMedia, user_id: currentUserID}
+      const payload = {...desiredMedia, user_id: auth.user.id}
       const { popularity, ...mediaData } = payload
       await axios.post(`${apiBaseUrl}/data/add/media`, mediaData )
       if (type === "MOVIE"){
@@ -141,13 +140,14 @@ const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList:
     }
 }
 
-async function removeEntry(element: HTMLParagraphElement, userID: number | null = null, updateUploaded: Dispatch<SetStateAction<savedEntry[]>>) {
+async function removeEntry(element: HTMLParagraphElement) {
   const clickedId: number | undefined = element.dataset.savedTmdb ? parseInt(element.dataset.savedTmdb, 10) : undefined;
+  const auth = tkManager.getState("auth")
   if (clickedId === undefined) {
     console.error("No tmdb_id found for the clicked element.");
     return;
   }
-  if (userID === null) {
+  if (auth.user?.id === null) {
     console.error("No userID provided.");
     return;
   }
@@ -156,26 +156,34 @@ async function removeEntry(element: HTMLParagraphElement, userID: number | null 
     const resp = await axios.delete(`${apiBaseUrl}/user/deleteMedia`, {
       data: {
         tmdb_id: clickedId, 
-        userID: userID
+        userID: auth.user?.id
       }
     });
     //console.log(resp)
-    viewMedia(updateUploaded, userID)
+    if (resp.data.removed) {
+      const entry = useSelector((state: RootState) => state.media.savedMedia).find((entry: savedEntry) => entry.tmdb_id === clickedId);
+      if (!entry) {
+        console.error("No saved media entry found for the clicked tmdb_id.");
+        return;
+      }
+      tkManager.updateState(removeFromSavedMedia, entry)
+    }
+    viewMedia()
   } catch (error) {
     console.error(error);
   }
 }
 
 function App() {
-  const [uploadedMedia, updateUploaded] = useState<savedEntry[]>([]);
-  const [searchedMedia, updateSearched] = useState<movieOrTvResult[]>([]);
-  const [currentSearch, updateCurrentSearch] = useState("");
-  const [currentUser, setCurrentUser] = useState("N/A")
-  const currentIDRef = useRef<number | null>(null)
+  const currAuth = tkManager.getState("auth")
+  const currMedia = tkManager.getState("media")
+  const savedMedia: savedEntry[] = currMedia.savedMedia
+  const searchedMedia: movieOrTvResult[] = currMedia.searchedMedia
+  const currSearchRef = useRef("");
   return (
     <>
       <div className='m-auto w-fit h-fit justify-center content-center bg-amber-100 flex flex-col mb-1'>
-        <h1>Current User: {currentUser}</h1>
+        <h1>Current User: {currAuth.user?.username || "N/A"}</h1>
         <form className='flex flex-col mb-1'>
           {/* <label htmlFor='emailField'>Email: </label>
           <input type='text' id='emailField' name='emailField' placeholder='Enter email!'></input> */}
@@ -183,7 +191,7 @@ function App() {
           <input type='text' id='loginUsernameField' name='loginUsernameField' placeholder='Enter username!'></input>
           <label htmlFor='loginPasswordField'>Password: </label>
           <input type='password' id='loginPasswordField' name='loginPasswordField' placeholder='Enter password!'></input>
-          <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleLogIn(e, setCurrentUser)}>Log In</button>
+          <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleLogIn(e)}>Log In</button>
         </form>
         <form className='flex flex-col'>
           <label htmlFor='signupEmailField'>Email: </label>
@@ -197,24 +205,24 @@ function App() {
       </div>
       <div className='mt-2 mb-2 m-auto w-fit h-fit grid justify-center bg-amber-200'>
         <h1>View Media</h1>
-        <button onClick={() => viewMedia(updateUploaded, currentIDRef.current)} className='hover:bg-amber-300 bg-amber-100 cursor-pointer'>View</button>
+        <button onClick={viewMedia} className='hover:bg-amber-300 bg-amber-100 cursor-pointer'>View</button>
         <div className='bg-amber-600 max-w-3xl savedMediaDiv'>
-          {uploadedMedia && uploadedMedia.length > 0 ? (
-            uploadedMedia.map((entry:savedEntry, index:number) => <p key={index} data-saved-tmdb={entry.tmdb_id} className='savedMediaEntry' onClick={(e) => removeEntry(e.currentTarget, currentIDRef.current, updateUploaded)}>{entry.title}</p>) 
+          {savedMedia && savedMedia.length > 0 ? (
+            savedMedia.map((entry:savedEntry, index:number) => <p key={index} data-saved-tmdb={entry.tmdb_id} className='savedMediaEntry' onClick={(e) => removeEntry(e.currentTarget)}>{entry.title}</p>) 
           ) : (
             "No Media Found"
           )}
         </div>
       </div>
-      <button onClick={() => searchMedia("Evangelion", updateSearched)} className='bg-amber-50 m-auto flex justify-center cursor-pointer'>Search Evangelion</button>
+      <button onClick={() => searchMedia("Evangelion")} className='bg-amber-50 m-auto flex justify-center cursor-pointer'>Search Evangelion</button>
       <div className='mt-2 mb-2 m-auto w-fit h-fit grid justify-center bg-amber-200'>
         <h1>Search Movies!</h1>
-        <input type='text' placeholder='Enter title here!' className='p-2' onChange={(e) => {updateCurrentSearch(e.target.value)}}/>
-        <button className='w-fit h-fit bg-amber-400 cursor-pointer m-auto' onClick={() => searchMedia(currentSearch, updateSearched)}>Search</button>
+        <input type='text' placeholder='Enter title here!' className='p-2' onChange={(e) => {currSearchRef.current = (e.target.value)}}/>
+        <button className='w-fit h-fit bg-amber-400 cursor-pointer m-auto' onClick={() => searchMedia(currSearchRef.current)}>Search</button>
         <div className='w-3xl h-80 flex justify-center content-center bg-amber-900 overflow-y-auto overflow-x-hidden wrap-break-word'>
           <ul className='text-amber-50 flex flex-wrap'>
             {searchedMedia.map((entry:movieOrTvResult, index:number) => (
-              <li key={index} className='mediaBanner w-[30%] h-auto' onClick={(e) => addMedia(Number(e.currentTarget.dataset.mediaId), currentIDRef.current, searchedMedia)} data-media-id={entry.tmdb_id}>{entry.title}
+              <li key={index} className='mediaBanner w-[30%] h-auto' onClick={(e) => addMedia(Number(e.currentTarget.dataset.mediaId))} data-media-id={entry.tmdb_id}>{entry.title}
               <img src={entry.poster_url} loading='lazy'></img>
               </li>
             )) || "No Results Found"}

@@ -43,10 +43,10 @@ class UserController {
     public deleteUserMedia = async (req: Request, res: Response) => {
         try {
            await this.userMediaService.deleteUserMedia(req.body.userID, req.body.tmdb_id)
-            res.status(200).json({connected: true, message: "Successfully deleted media!"})
+            res.status(200).json({removed: true, message: "Successfully deleted media!"})
         } catch (error) {
             res.status(500).json({
-                connected: false,
+                removed: false,
                 error: handleError(error)
             })
         }

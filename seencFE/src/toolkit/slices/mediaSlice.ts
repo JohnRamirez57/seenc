@@ -19,12 +19,16 @@ const mediaSlice = createSlice({
   initialState,
 
   reducers: {
+    renewSavedMedia: (state, action: PayloadAction<savedEntry[]>) => {
+      state.savedMedia = action.payload;
+    },
+
     addToSavedMedia: (state, action: PayloadAction<savedEntry>) => {
       state.savedMedia = [...state.savedMedia, action.payload];
     },
 
     removeFromSavedMedia: (state, action: PayloadAction<savedEntry>) => {
-        state.savedMedia = [...state.savedMedia, action.payload];
+        state.savedMedia = state.savedMedia.filter((entry: savedEntry) => entry.tmdb_id !== action.payload.tmdb_id);
     },
 
     updateSearchedMedia: (state, action: PayloadAction<movieOrTvResult[]>) => {
@@ -33,6 +37,6 @@ const mediaSlice = createSlice({
   }
 });
 
-export const { addToSavedMedia, removeFromSavedMedia, updateSearchedMedia } = mediaSlice.actions;
-
+export const { addToSavedMedia, removeFromSavedMedia, updateSearchedMedia, renewSavedMedia } = mediaSlice.actions;
+export type mediaActions = typeof mediaSlice.actions;
 export default mediaSlice.reducer;
