@@ -1,16 +1,43 @@
 import type { Request, Response } from "express";
 import { UserMediaService } from "../services/media.service.ts";
-import type { AxiosResponse } from "axios";
 import { handleError } from "../utils/error.util.ts";
-import type { usersTable } from "../interfaces/prismaTables.interfaces.ts";
 import { PrismaService } from "../services/prisma.service.ts";
+import { UserAccountService } from "../services/account.service.ts";
+import dotenv from "dotenv"
+
+dotenv.config()
 
 class UserController {
     private readonly userMediaService: UserMediaService;
     private readonly prismaService: PrismaService;
+    private readonly userAccountService: UserAccountService;
+
     constructor() {
         this.userMediaService = new UserMediaService()
         this.prismaService = new PrismaService();
+        this.userAccountService = new UserAccountService();
+    }
+
+    public logIn = async (req: Request, res: Response) => {
+        try {
+            await this.userAccountService.logIn(req, res)
+        } catch (error) {
+            res.status(500).json({
+                connected: false,
+                error: handleError(error)
+            })
+        }
+    }
+
+    public signUp = async (req: Request, res: Response) => {
+        try {
+            await this.userAccountService.signUp(req, res)
+        } catch (error) {
+            res.status(500).json({
+                connected: false,
+                error: handleError(error)
+            })
+        }
     }
 
     public deleteUserMedia = async (req: Request, res: Response) => {
@@ -42,10 +69,11 @@ class UserController {
         }
     }
 
+
     public linkAccount = async (req: Request, res: Response) => {
         try {
             const id: number = Number.parseInt(req.query.id as string)
-            const returnedUser: usersTable | null = await this.prismaService.findUser(id)
+            const returnedUser = await this.prismaService.findUser(id)
             res.json(returnedUser)
         } catch (error) {
             res.status(200).json({

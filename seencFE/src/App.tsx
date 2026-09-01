@@ -51,29 +51,53 @@ const searchMedia = async (searchUp: string, updateSearched: Dispatch<SetStateAc
   }
 }
 
-const linkAccount = async (setCurrentUser: Dispatch<SetStateAction<string>>, currentIDRef: RefObject<number | null>) => {
-  if (currentIDRef.current != null){
-    currentIDRef.current = null;
-    setCurrentUser("N/A")
-  } else {
-    const accID = (document.getElementById("accountIDField") as HTMLInputElement).value;
-    // console.log(accID)
-    if (!accID) return;
-    const returnedUser = await axios.get(`${apiBaseUrl}/user/linkUser`, {
-      params: {
-        id: accID
-      }
-    });
-    if (returnedUser.data == null){
-      setCurrentUser("User Not Found")
-    } else {
-      setCurrentUser(returnedUser.data.username)
-      currentIDRef.current = returnedUser.data.id;
+const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>, setCurrentUser: Dispatch<SetStateAction<string>>) => {
+  e.preventDefault()
+  const formElement = e.currentTarget.form;
+  if (!formElement) {console.error("Form not found!"); setCurrentUser("Error"); return;}
+  const formData = new FormData(formElement);
+  const username = formData.get("loginUsernameField") as string;
+  const password = formData.get("loginPasswordField") as string;
+  const user = await axios.get(`${apiBaseUrl}/user/log-in`, {
+    params: {
+      username: username,
+      password: password
     }
-  }
+  })
 
+  if (!user) {
+    console.error("User not found!");
+    setCurrentUser("User Not Found")
+    return;
+  }
+  formElement?.reset()
+  setCurrentUser(`${user.data?.username  || "Stranger"}`)
 }
 
+const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault()
+  const formElement = e.currentTarget.form;
+  // console.log(formElement)
+  if (!formElement) { console.error("No sign-up form found!"); return; }
+  const formData = new FormData(formElement)
+  const username = formData.get("signupUsernameField") as string;
+  const password = formData.get("signupPasswordField") as string;
+  const email = formData.get("signupEmailField") as string;
+
+  const user = await axios.post(`${apiBaseUrl}/user/sign-up`, {
+      username,
+      email,
+      password
+    },
+    { withCredentials: true }
+  )
+
+  if (!user) {
+    console.error("User not found!");
+    return;
+  }
+  // console.log(JSON.stringify(user.data))
+}
 
 const addMedia = async (tmdbID: number, currentUserID: number | null, mediaList: movieOrTvResult[]) => {
     if (currentUserID == null){
@@ -150,12 +174,26 @@ function App() {
   const currentIDRef = useRef<number | null>(null)
   return (
     <>
-      <div className='m-auto w-fit h-fit justify-center content-center bg-amber-100 grid mb-1'>
+      <div className='m-auto w-fit h-fit justify-center content-center bg-amber-100 flex flex-col mb-1'>
         <h1>Current User: {currentUser}</h1>
-        <div>
-          <input type="number" placeholder='Enter User ID' className='p-0.5' id='accountIDField'/>
-          <button className='bg-amber-200 hover:cursor-pointer' onClick={() => linkAccount(setCurrentUser, currentIDRef)}>{currentIDRef.current == null ? "Link Account" : "Unlink Account"}</button>
-        </div>
+        <form className='flex flex-col mb-1'>
+          {/* <label htmlFor='emailField'>Email: </label>
+          <input type='text' id='emailField' name='emailField' placeholder='Enter email!'></input> */}
+          <label htmlFor='loginUsernameField'>Username: </label>
+          <input type='text' id='loginUsernameField' name='loginUsernameField' placeholder='Enter username!'></input>
+          <label htmlFor='loginPasswordField'>Password: </label>
+          <input type='password' id='loginPasswordField' name='loginPasswordField' placeholder='Enter password!'></input>
+          <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleLogIn(e, setCurrentUser)}>Log In</button>
+        </form>
+        <form className='flex flex-col'>
+          <label htmlFor='signupEmailField'>Email: </label>
+          <input type='text' id='signupEmailField' name='signupEmailField' placeholder='Enter email!'></input>
+          <label htmlFor='signupUsernameField'>Username: </label>
+          <input type='text' id='signupUsernameField' name='signupUsernameField' placeholder='Enter username!'></input>
+          <label htmlFor='signupPasswordField'>Password: </label>
+          <input type='signupPassword' id='signupPasswordField' name='signupPasswordField' placeholder='Enter password!'></input>
+          <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleSignUp(e)}>Sign Up</button>
+        </form>
       </div>
       <div className='mt-2 mb-2 m-auto w-fit h-fit grid justify-center bg-amber-200'>
         <h1>View Media</h1>

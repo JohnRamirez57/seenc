@@ -28,6 +28,7 @@ export function validateQuery(schema: Joi.ObjectSchema) {
         next: NextFunction
     ) => {
         const { error } = schema.validate(req.query);
+        console.error("Query Params: ", req.query)
 
         if (error) {
             console.error(error.details[0].message)
@@ -67,6 +68,17 @@ export const addMediaUnitsSchema = Joi.object({
 
 export const getUserSchema = Joi.object({
     id: Joi.string().min(1).required()
+})
+
+export const logInSchema = Joi.object({
+    username: Joi.string().min(1).required(),
+    password: Joi.string().min(1).required()
+})
+
+export const signUpSchema = Joi.object({
+    username: Joi.string().min(1).required(),
+    password: Joi.string().min(1).required(),
+    email: Joi.string().email().required()
 })
 
 export const searchMediaSchema = Joi.object({

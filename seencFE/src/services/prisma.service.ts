@@ -2,15 +2,51 @@ import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces
 // import type { characterParams, mediaUnitParams } from "../interfaces/media.interfaces.ts";
 import { prisma } from "../prismaClient/prisma";
 import { formatPosterPathing } from "../utils/format.util";
+import { validateEmail } from "../utils/validate.util";
 import { TMDBService } from "./tmdb.service";
+import bcrypt from 'bcrypt';
+const saltRounds = 10;
 
 export class PrismaService {
     private readonly prismaClient = prisma;
     private readonly tmdbService = new TMDBService();
 
+    public createUser = async (email: string, username: string, password: string) => {
+        const passwordHash = await bcrypt.hash(password, saltRounds)
+        return this.prismaClient.users.create({
+            data: {
+                created_at: new Date(),
+                email: email,
+                username: username,
+                password_hash: passwordHash
+            }
+        })
+    }
+
     public findUser = async (userId: number) => {
         return this.prismaClient.users.findUnique({
             where: {id: userId}
+        })
+    }
+
+    public async checkAvailableSignUp(email: string, username: string): Promise<boolean | Error> {
+        if (!validateEmail(email)) throw new Error("Invalid email.")
+        if ((await this.findUserByName(username)) !== null) throw new Error("Username already in use!")
+        if ((await this.findUserByEmail(email)) !== null) throw new Error("Email already in use!")
+        return true;
+    }
+
+    public findUserByName = async (username: string) => {
+        return this.prismaClient.users.findUnique({
+            where: {username: username}
+        })
+    }
+
+    public findUserByEmail = async (email: string) => {
+        return this.prismaClient.users.findUnique({
+            where: {
+                email: email
+            }
         })
     }
 
