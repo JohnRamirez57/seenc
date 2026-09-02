@@ -6,6 +6,7 @@ const posterImagePath = "https://image.tmdb.org/t/p/w500"
 const backupPoster = "https://placehold.net/400x600.png"
 
 function determineMediaType(mediaType: string){
+    console.error(mediaType)
     mediaType = mediaType.toLocaleLowerCase();
     if (mediaType === "tv") return media_type.TV;
     if (mediaType === "movie") return media_type.MOVIE;
@@ -14,6 +15,8 @@ function determineMediaType(mediaType: string){
 }
 
 export function formatMultiResults(data: retrievedMedia){
+    // console.error(data.results)
+    data.results = data.results.filter((entry) => entry.media_type.toLocaleUpperCase() in media_type);
     data.results = data.results.map((entry: retrievedResult) => (
         {...entry, poster_path: entry.poster_path != null ? posterImagePath + entry.poster_path : backupPoster, media_type: determineMediaType(entry.media_type)}
     ))
@@ -49,17 +52,21 @@ export function extractSuccessfulResponses<T>(
 }
 
 export function formatMediaResult(resp: retrievedMedia): movieOrTvResult[] {
-    return resp.results.map((entry: retrievedResult) => ({
-            title: entry.title ?? entry.name ?? "Untitled",
-            poster_url: entry?.poster_path,
-            tmdb_id: entry.id,
-            description: entry.overview,
-            media_type: entry.media_type,
-            release_date: entry?.release_date ? new Date(entry.release_date) : entry?.first_air_date ? new Date(entry.first_air_date) : new Date(),
-            created_at: new Date(),
-            updated_at: new Date(),
-            popularity: entry.popularity
-          })).toSorted((a: movieOrTvResult, b: movieOrTvResult) => b.popularity - a.popularity);
+    return resp.results.map((entry: retrievedResult) => {
+            const releaseDate = entry?.release_date ?? entry?.first_air_date ?? new Date().toISOString();
+
+            return {
+                title: entry.title ?? entry.name ?? "Untitled",
+                poster_url: entry?.poster_path,
+                tmdb_id: entry.id,
+                description: entry.overview,
+                media_type: entry.media_type,
+                release_date: releaseDate,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                popularity: entry.popularity
+            };
+          }).toSorted((a: movieOrTvResult, b: movieOrTvResult) => b.popularity - a.popularity);
 }
 
 export function formatMovieResults(data: retrievedMedia){

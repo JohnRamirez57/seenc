@@ -20,7 +20,7 @@ const mediaSlice = createSlice({
 
   reducers: {
     renewSavedMedia: (state, action: PayloadAction<savedEntry[]>) => {
-      state.savedMedia = action.payload;
+      state.savedMedia = Array.isArray(action.payload) ? action.payload : [];
     },
 
     addToSavedMedia: (state, action: PayloadAction<savedEntry>) => {

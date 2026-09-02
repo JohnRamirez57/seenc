@@ -1,23 +1,39 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useRef } from 'react'
 import axios from 'axios'
 import { apiBaseUrl } from './config.ts'
 import './App.css'
-import { useDispatch, useSelector } from 'react-redux'
 import type {retrievedMedia, movieOrTvResult} from "./interfaces/media.interfaces.ts"
 import type { savedEntry } from './interfaces/user.interfaces.ts'
 import { searchTMDBType } from './interfaces/tmdb.interfaces.ts'
 import { formatMediaResult } from './utils/format.util.ts'
-import type { RootState } from './toolkit/store/store.ts'
 import { removeFromSavedMedia, renewSavedMedia, updateSearchedMedia } from './toolkit/slices/mediaSlice.ts'
 import { ToolkitManager } from './toolkit/toolkitManager/toolkitClass.ts'
+import { login, logout } from './toolkit/slices/authSlice.ts'
+import { useSelector } from 'react-redux'
+import type { RootState } from './toolkit/store/store.ts'
 
 const tkManager = new ToolkitManager()
-const dispatch = useDispatch();
-const viewMedia = async () => { //RefObject<number | null>
+
+window.addEventListener("load", async () => {
+    try {
+        const resp = await axios.get(`${apiBaseUrl}/user/me`, {
+            withCredentials: true
+        });
+
+        const { username, id } = resp.data;
+
+        tkManager.updateState(login, { username, id });
+
+    } catch (error) {
+        console.log("User is not logged in.");
+    }
+});
+
+const viewMedia = async () => {
   const auth = tkManager.getState("auth");
   const userID = auth.user?.id;
-  if (!auth.isAuthenticated) return new Error("User session expired. Please log in!")
-  if (!userID) return new Error("Error retrieving user id for saved media!")
+  if (!auth.isAuthenticated) { console.error("User session expired. Please log in!"); return; }
+  if (!userID) { console.error("Error retrieving user id for saved media!"); return; }
 
   try {
     const resp = await axios.get(`${apiBaseUrl}/user/getMedia`, {
@@ -25,7 +41,8 @@ const viewMedia = async () => { //RefObject<number | null>
         userID: userID
       }
     });
-    tkManager.updateState(renewSavedMedia, resp.data);
+    const media = Array.isArray(resp.data) ? resp.data : [];
+    tkManager.updateState(renewSavedMedia, media);
   } catch (error) {
     console.error(error)
     //updateUploaded(JSON.stringify(error));
@@ -57,18 +74,41 @@ const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
   const formData = new FormData(formElement);
   const username = formData.get("loginUsernameField") as string;
   const password = formData.get("loginPasswordField") as string;
-  const user = await axios.get(`${apiBaseUrl}/user/log-in`, {
-    params: {
-      username: username,
-      password: password
+  const user = await axios.post(`${apiBaseUrl}/user/log-in`, {
+      username,
+      password
+    }, {
+      withCredentials: true
     }
-  })
+  );
 
   if (!user) {
     console.error("User not found!");
     return;
   }
+  const userAuth = {
+    username: username,
+    id: user.data.id
+  }
+
+  tkManager.updateState(login, userAuth);
   formElement?.reset()
+}
+
+const handleLogOut = async () => {
+  const auth = tkManager.getState("auth")
+  if (!auth.isAuthenticated) {
+    console.error("No account to sign out from!");
+    return;
+  }
+  try {
+    await axios.post(`${apiBaseUrl}/user/log-out`, {}, { withCredentials: true })
+  } catch (error) {
+    console.error("Error logging out: ", error)
+  }
+
+  tkManager.updateState(logout);
+  console.log("Logged out successfully!");
 }
 
 const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -161,7 +201,8 @@ async function removeEntry(element: HTMLParagraphElement) {
     });
     //console.log(resp)
     if (resp.data.removed) {
-      const entry = useSelector((state: RootState) => state.media.savedMedia).find((entry: savedEntry) => entry.tmdb_id === clickedId);
+      const savedMedia = tkManager.getState("media").savedMedia;
+      const entry = savedMedia.find((item: savedEntry) => item.tmdb_id === clickedId);
       if (!entry) {
         console.error("No saved media entry found for the clicked tmdb_id.");
         return;
@@ -175,8 +216,8 @@ async function removeEntry(element: HTMLParagraphElement) {
 }
 
 function App() {
-  const currAuth = tkManager.getState("auth")
-  const currMedia = tkManager.getState("media")
+  const currAuth = useSelector((state: RootState) => state.auth)
+  const currMedia = useSelector((state: RootState) => state.media)
   const savedMedia: savedEntry[] = currMedia.savedMedia
   const searchedMedia: movieOrTvResult[] = currMedia.searchedMedia
   const currSearchRef = useRef("");
@@ -185,13 +226,22 @@ function App() {
       <div className='m-auto w-fit h-fit justify-center content-center bg-amber-100 flex flex-col mb-1'>
         <h1>Current User: {currAuth.user?.username || "N/A"}</h1>
         <form className='flex flex-col mb-1'>
-          {/* <label htmlFor='emailField'>Email: </label>
-          <input type='text' id='emailField' name='emailField' placeholder='Enter email!'></input> */}
-          <label htmlFor='loginUsernameField'>Username: </label>
-          <input type='text' id='loginUsernameField' name='loginUsernameField' placeholder='Enter username!'></input>
-          <label htmlFor='loginPasswordField'>Password: </label>
-          <input type='password' id='loginPasswordField' name='loginPasswordField' placeholder='Enter password!'></input>
-          <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleLogIn(e)}>Log In</button>
+          { !currAuth.isAuthenticated && (
+            <>
+            <label htmlFor='loginUsernameField'>Username: </label>
+            <input type='text' id='loginUsernameField' name='loginUsernameField' placeholder='Enter username!'></input>
+            <label htmlFor='loginPasswordField'>Password: </label>
+            <input type='password' id='loginPasswordField' name='loginPasswordField' placeholder='Enter password!'></input>
+            </>
+          )}
+          <div className='flex justify-around'>
+            { !currAuth.isAuthenticated && (
+              <button type='submit' className='hover:cursor-pointer hover:bg-amber-500' onClick={(e) => handleLogIn(e)}>Log In</button>
+            ) }
+            { currAuth.isAuthenticated && (
+              <button type='button' className='hover:cursor-pointer hover:bg-amber-500' onClick={handleLogOut}>Log Out</button>
+            ) }
+          </div>
         </form>
         <form className='flex flex-col'>
           <label htmlFor='signupEmailField'>Email: </label>
@@ -221,7 +271,7 @@ function App() {
         <button className='w-fit h-fit bg-amber-400 cursor-pointer m-auto' onClick={() => searchMedia(currSearchRef.current)}>Search</button>
         <div className='w-3xl h-80 flex justify-center content-center bg-amber-900 overflow-y-auto overflow-x-hidden wrap-break-word'>
           <ul className='text-amber-50 flex flex-wrap'>
-            {searchedMedia.map((entry:movieOrTvResult, index:number) => (
+            {searchedMedia.map((entry:movieOrTvResult, index: number) => (
               <li key={index} className='mediaBanner w-[30%] h-auto' onClick={(e) => addMedia(Number(e.currentTarget.dataset.mediaId))} data-media-id={entry.tmdb_id}>{entry.title}
               <img src={entry.poster_url} loading='lazy'></img>
               </li>

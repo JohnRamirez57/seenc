@@ -198,9 +198,9 @@ export interface movieOrTvResult {
   tmdb_id: number,
   description: string,
   media_type: string,
-  release_date?: Date,
-  created_at: Date,
-  updated_at: Date
+  release_date?: string,
+  created_at: string,
+  updated_at: string,
   popularity: number
 }
 

@@ -4,6 +4,7 @@ import { handleError } from "../utils/error.util.ts";
 import { PrismaService } from "../services/prisma.service.ts";
 import { UserAccountService } from "../services/account.service.ts";
 import dotenv from "dotenv"
+import type { AuthenticatedRequest } from "../../../seencBE/backendMiddleware/jwtValidation.ts";
 
 dotenv.config()
 
@@ -52,15 +53,23 @@ class UserController {
         }
     }
 
+    public logOut = async (req: Request, res: Response) => {
+        return this.userAccountService.signOut(req, res);
+    }
+
+    public checkIfUserTokenExists = async (req: AuthenticatedRequest, res: Response) => {
+        const user = req.user;
+        return res.status(200).json({
+            username: user?.username,
+            id: user?.user_id
+        })
+    }
+
     public getAllUserMedia = async (req: Request, res: Response) => {
         try {
             const medias = await this.userMediaService.getAllUserMedia(Number(req.query.userID))
-
-            res.json(
-                Object.keys(medias).length === 0
-                ? "No medias have been added yet!"
-                : medias
-            );
+            console.error("My media: ", medias)
+            res.json(medias);
         } catch (error) {
             res.status(500).json({
                 connected: false,

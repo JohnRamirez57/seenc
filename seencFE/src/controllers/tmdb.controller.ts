@@ -44,6 +44,7 @@ class TMDBController {
 
     public searchQuery = async(req: Request, res: Response) => {
         try {
+            console.error(req.query)
             const query = typeof req.query.query === "string" ? req.query.query : "";
             const searchType: string = typeof req.query.searchType === "string" ? req.query.searchType : "";
             const searchService: searchFn = this.determineSearchFn(searchType);

@@ -1,5 +1,5 @@
 import jwt, { type SignOptions } from "jsonwebtoken"
-import type { Response } from "express";
+import type { Response, CookieOptions } from "express";
 const SECONDS = 60;
 const MINUTES = 60;
 const MILLISECONDS = 1000;
@@ -18,9 +18,9 @@ export function signToken(username: string, user_id: number): string {
     return token;
 }
 
-export function createPrivateToken(username: string, password: string, email: string): string {
+export function signPersonalToken(username: string, id: number, email: string): string {
     const token = jwt.sign(
-        {username: username, password: password, email: email},
+        {username: username, id: id, email: email},
         process.env.JWT_SECRET_KEY!,
         {expiresIn: process.env.EXPIRES_IN_TIME as SignOptions["expiresIn"]}
     )
@@ -28,11 +28,18 @@ export function createPrivateToken(username: string, password: string, email: st
     return token
 }
 
+const filledCookieDetails: CookieOptions = {
+    maxAge: SECONDS * MINUTES * MILLISECONDS,
+    httpOnly: HTTP_ONLY_STATE,
+    secure: process.env.NODE_ENV === EXPECTED_NODE_ENV,
+    path: "/",
+    sameSite: SAME_SITE_MODE
+}
+
 export function setCookie(res: Response, token: string) {
-    res.cookie(TOKEN_NAME, token, {
-        maxAge: SECONDS * MINUTES * MILLISECONDS,
-        httpOnly: HTTP_ONLY_STATE,
-        secure: process.env.NODE_ENV === EXPECTED_NODE_ENV,
-        sameSite: SAME_SITE_MODE
-    })
+    res.cookie(TOKEN_NAME, token, filledCookieDetails)
+}
+
+export function clearCookie(res: Response) {
+    res.clearCookie(TOKEN_NAME, filledCookieDetails)
 }
