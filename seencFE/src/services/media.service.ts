@@ -24,6 +24,10 @@ export class MediaService extends Service{
 }
 
 export class MediaUnitService extends Service {
+    public async checkMediaUnitExists(tmdb_id: number, unit_number: number) {
+        return this.prismaService.findMediaUnit(tmdb_id, unit_number)
+    }
+
     public async createMediaUnit(muParams: any) {
         return this.prismaService.createMediaUnit(muParams)
     }
@@ -49,7 +53,7 @@ export class MediaUnitService extends Service {
         seasonEpisodesDetails.forEach((entry: any) => {
             const data = {
                 media_id: media.id,
-                season_id: season.id,
+                season_id: season?.id,
                 unit_number: entry.episode_number,
                 unit_type: unit_type.EPISODE,
                 title: entry.name,

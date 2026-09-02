@@ -58,6 +58,15 @@ export class PrismaService {
         })
     }
 
+    public findMediaUnit = async (tmdb_id: number, unit_number: number) => {
+        return prisma.media_unit.findFirst({
+            where: {
+                tmdb_id: tmdb_id,
+                unit_number: unit_number
+            }
+        })
+    }
+
     public createMedia = async (mediaParams: newMediaParams) => {
         return prisma.media.create({
             data: mediaParams

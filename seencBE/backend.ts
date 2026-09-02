@@ -6,6 +6,15 @@ import tmdbRoutes from "../seencFE/src/routes/tmdb.routes.ts";
 import userRoutes from "../seencFE/src/routes/user.routes.ts";
 import dataRoutes from "../seencFE/src/routes/data.routes.ts";
 
+/* 
+Implement: 
+!user_progress
+!questions
+!knowledges
+!events
+!character_appearances
+*/
+
 const app = express();
 
 app.use(express.json());

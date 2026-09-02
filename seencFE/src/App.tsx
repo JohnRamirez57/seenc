@@ -154,29 +154,18 @@ const addMedia = async (tmdbID: number) => {
       const payload = {...desiredMedia, user_id: auth.user.id}
       const { popularity, ...mediaData } = payload
       await axios.post(`${apiBaseUrl}/data/add/media`, mediaData )
-      if (type === "MOVIE"){
-        console.log(await axios.get(`${apiBaseUrl}/tmdb/credits`, {
-          params: {
-            tmdb_id: tmdbID
-          }
-        }))
-      } else if (type === "TV"){
-        console.log(await axios.get(`${apiBaseUrl}/tmdb/tv/details`, {
-          params: {
-            tmdb_id: Number(tmdbID)
-          }
-        }))
-        console.log(await axios.get(`${apiBaseUrl}/tmdb/tv/seasonEpisodesInfo`, {
-          params: {
-            tmdb_id: tmdbID,
-            season_number: 1,
-          }
-        }))
-        console.log(await axios.post(`${apiBaseUrl}/data/add/mediaUnits`, {tmdb_id: tmdbID}))
-      }
     } catch (err) {
-      // console.log("Error in addMedia function!")
       console.error(err)
+    }
+
+    try {
+      if (type === "MOVIE"){
+        await axios.post(`${apiBaseUrl}/data/add/media/movie-unit`, { tmdb_id: tmdbID })
+      } else if (type === "TV"){
+        await axios.post(`${apiBaseUrl}/data/add/media/tv-unit`, {tmdb_id: tmdbID})
+      }
+    } catch (error) {
+      console.error(error) 
     }
 }
 
