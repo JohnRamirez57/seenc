@@ -6,7 +6,6 @@ const posterImagePath = "https://image.tmdb.org/t/p/w500"
 const backupPoster = "https://placehold.net/400x600.png"
 
 function determineMediaType(mediaType: string){
-    console.error(mediaType)
     mediaType = mediaType.toLocaleLowerCase();
     if (mediaType === "tv") return media_type.TV;
     if (mediaType === "movie") return media_type.MOVIE;
@@ -22,24 +21,33 @@ export function formatMultiResults(data: retrievedMedia){
     ))
 }
 
-export function formatPosterPathing(data: any) {
+export function formatPosterPathing(data: any, seen: WeakSet<object> = new WeakSet()): any {
     if (!data) return backupPoster
-    if (typeof data === "string"){
-        if (data.length === 0){
-            return backupPoster
-        }
-        return posterImagePath + data
-    }
-    if (typeof data === "object"){
-        fixPosterPathing(data)
-    } else {
-        data.map((entry: any) => fixPosterPathing(entry))
-    }
-}
 
-function fixPosterPathing(data: any) {
-    data.poster_path &&= posterImagePath + data.poster_path;
-    data.still_path &&= posterImagePath + data.still_path;
+    if (typeof data === "string") {
+        if (data.length === 0) return backupPoster
+        return data.startsWith("http") ? data : posterImagePath + data
+    }
+
+    if (Array.isArray(data)) {
+        if (seen.has(data)) return data
+        seen.add(data)
+        return data.map((entry) => formatPosterPathing(entry, seen))
+    }
+
+    if (typeof data === "object") {
+        if (seen.has(data)) return data
+        seen.add(data)
+        Object.keys(data).forEach((key) => {
+            if (["poster_path", "still_path", "profile_path"].includes(key)) {
+                data[key] = formatPosterPathing(data[key], seen)
+            } else if (data[key] && typeof data[key] === "object") {
+                data[key] = formatPosterPathing(data[key], seen)
+            }
+        })
+    }
+
+    return data
 }
 
 export function extractSuccessfulResponses<T>(

@@ -1,5 +1,5 @@
 import axios, { type AxiosResponse } from 'axios';
-import type { detailsParams, EpisodeDetails, searchParams } from '../interfaces/media.interfaces.ts';
+import type { detailsParams, EpisodeDetails, MovieCredit, RetrievedMovieCredits, searchParams } from '../interfaces/media.interfaces.ts';
 import { createSearchParamsObject } from '../utils/param.util.ts';
 import { TokenBucket } from "../apiBucket/Bucket.ts"
 import { extractSuccessfulResponses } from '../utils/format.util.ts';
@@ -13,6 +13,8 @@ export class TMDBService {
     private readonly getSeasonDetailsURL = "https://api.themoviedb.org/3/tv/%d/season/%d"
     private readonly getTVEpisodeDetailsURL = "https://api.themoviedb.org/3/tv/{series_id}/season/{season_number}/episode/{episode_number}"
     private readonly getMovieCreditsURL = `/credits` // getMovieDetails + ${movie_id} + getMovieCreditsURL
+    private readonly profilePathing = "https://image.tmdb.org/t/p/"
+    private readonly profileSize = "original"
     private readonly STARTING_API_TOKENS = 40;
     private readonly MAX_API_CALLS_PER_SECOND = 45;
     private readonly limiter: TokenBucket = new TokenBucket(this.STARTING_API_TOKENS, this.MAX_API_CALLS_PER_SECOND);
@@ -47,15 +49,27 @@ export class TMDBService {
     }
 
     public async getMovieCredits(movieId: number) {
-        return axios.get(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, {
+        const resp: AxiosResponse<RetrievedMovieCredits> = await axios.get(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, {
+            params: {
+                api_key: process.env.TMDBKEY
+            }
+        })
+        resp.data.cast.forEach((entry: MovieCredit) => entry.profile_path = `${this.profilePathing}${this.profileSize}${entry.profile_path}`)
+        return resp;
+    }
+
+    public async getTVDetails(tmdb_id: number) {
+        return axios.get(`${this.getTVDetailsURL}${tmdb_id}`, {
             params: {
                 api_key: process.env.TMDBKEY
             }
         })
     }
 
-    public async getTVDetails(tmdb_id: number) {
-        return axios.get(`${this.getTVDetailsURL}${tmdb_id}`, {
+    public async getEpisodeCredits(tmdb_id: number, season_number: number, episode_number: number): Promise<AxiosResponse>{
+        const url = this.getTVEpisodeDetailsURL.replace("{series_id}", String(tmdb_id)).replace("{season_number}", String(season_number)).replace("{episode_number}", String(episode_number)) + "/credits"
+
+        return axios.get(`${url}`, {
             params: {
                 api_key: process.env.TMDBKEY
             }

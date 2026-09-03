@@ -10,9 +10,6 @@ import { PrismaService } from "../services/prisma.service.ts";
 class TMDBController {
     private readonly tmdbService: TMDBService;
     private readonly extraPageNumber = 2;
-    private readonly profilePathing = "https://image.tmdb.org/t/p/"
-    private readonly profileSize = "original"
-    private readonly prismaClient = new PrismaService;
 
     constructor(){
         this.tmdbService = new TMDBService();
@@ -70,12 +67,10 @@ class TMDBController {
         try {
             const movieId = req.query.tmdb_id as unknown as number;
             const returnedCredits: AxiosResponse<retrievedMovieCredits> = await this.tmdbService.getMovieCredits(movieId)
-            returnedCredits.data.cast.forEach((entry: MovieCredit) => entry.profile_path = `${this.profilePathing}${this.profileSize}${entry.profile_path}`)
-            this.prismaClient.checkCastCharacterMedia(movieId, returnedCredits.data.cast)
-            res.json(returnedCredits.data.cast)
+            res.status(200).json(returnedCredits.data.cast)
         } catch (error) {
             console.error(error)
-            res.status(200).json({
+            res.status(400).json({
                 error: handleError(error)
             })
         }

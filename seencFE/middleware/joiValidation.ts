@@ -86,6 +86,10 @@ export const searchMediaSchema = Joi.object({
     search: Joi.string().min(1).required()
 })
 
+export const requireTMDBSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(1).required()
+})
+
 export const addMediaSchema = Joi.object({
     user_id: Joi.number().integer().min(0).required(),
     // id: Joi.number().integer().min(0).required(),

@@ -10,7 +10,7 @@ const EXPECTED_NODE_ENV = "production"
 export function signToken(username: string, user_id: number): string {
     // payload, then secret key, then options
     const token = jwt.sign(
-        {username: username, user_id: user_id},
+        {username: username, userID: user_id},
         process.env.JWT_SECRET_KEY!,
         {expiresIn: process.env.EXPIRES_IN_TIME as SignOptions["expiresIn"]}
     )

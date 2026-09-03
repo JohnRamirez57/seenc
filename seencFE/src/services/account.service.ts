@@ -1,3 +1,4 @@
+// @ts-expect-error bcrypt does not provide TypeScript declarations in this project.
 import bcrypt from "bcrypt"
 import type { Request, Response } from "express";
 import { PrismaService } from "./prisma.service";
@@ -29,7 +30,6 @@ export class UserAccountService {
     public logIn = async (req: Request, res: Response) => {
         try {
             const existingToken = req.cookies?.token;
-            console.error(existingToken)
             if (existingToken) {
                 return res.status(409).json({
                     error: "Already logged in. Log out first to switch accounts!"

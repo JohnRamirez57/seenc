@@ -24,17 +24,17 @@ export class MediaService extends Service{
 }
 
 export class MediaUnitService extends Service {
-    public async checkMediaUnitExists(tmdb_id: number, unit_number: number) {
-        return this.prismaService.findMediaUnit(tmdb_id, unit_number)
+    public async checkMediaUnitExists(tmdb_id: number, unit_number: number, checkAsMovie: boolean = false) {
+        return this.prismaService.findMediaUnit(tmdb_id, unit_number, checkAsMovie)
     }
 
     public async createMediaUnit(muParams: any) {
         return this.prismaService.createMediaUnit(muParams)
     }
 
-    public async createMultipleMediaUnits(seasonEpisodesDetails: any[]){
-        const tmdb_id: number = seasonEpisodesDetails[0]?.tmdb_id || -1;
-        const season_number: number = seasonEpisodesDetails[0]?.season_number || -1;
+    public async createMultipleMediaUnits(seasonEpisodesDetails: any[], tmdb?: number, season_num?: number){
+        const tmdb_id: number = seasonEpisodesDetails[0]?.tmdb_id || tmdb || -1;
+        const season_number: number = seasonEpisodesDetails[0]?.season_number || season_num || -1;
         const media = await this.prismaService.findMedia(tmdb_id);
 
         if (!media) {

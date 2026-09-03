@@ -61,14 +61,13 @@ class UserController {
         const user = req.user;
         return res.status(200).json({
             username: user?.username,
-            id: user?.user_id
+            id: user?.userID
         })
     }
 
     public getAllUserMedia = async (req: Request, res: Response) => {
         try {
             const medias = await this.userMediaService.getAllUserMedia(Number(req.query.userID))
-            console.error("My media: ", medias)
             res.json(medias);
         } catch (error) {
             res.status(500).json({

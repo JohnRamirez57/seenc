@@ -153,16 +153,20 @@ const addMedia = async (tmdbID: number) => {
     try { 
       const payload = {...desiredMedia, user_id: auth.user.id}
       const { popularity, ...mediaData } = payload
-      await axios.post(`${apiBaseUrl}/data/add/media`, mediaData )
+      await axios.post(`${apiBaseUrl}/data/add/media`, mediaData, { withCredentials: true })
+      viewMedia()
     } catch (err) {
       console.error(err)
+      return
     }
 
     try {
       if (type === "MOVIE"){
-        await axios.post(`${apiBaseUrl}/data/add/media/movie-unit`, { tmdb_id: tmdbID })
+        await axios.post(`${apiBaseUrl}/data/add/media/movie-unit`, { tmdb_id: tmdbID }, { withCredentials: true })
+        await axios.post(`${apiBaseUrl}/data/add/misc/character-appearances/movie`, {tmdb_id: tmdbID}, { withCredentials: true })
       } else if (type === "TV"){
-        await axios.post(`${apiBaseUrl}/data/add/media/tv-unit`, {tmdb_id: tmdbID})
+        await axios.post(`${apiBaseUrl}/data/add/media/tv-unit`, {tmdb_id: tmdbID, season_number: 1}, { withCredentials: true })
+        await axios.post(`${apiBaseUrl}/data/add/misc/character-appearances/tv`, {tmdb_id: tmdbID, season_number: 1}, { withCredentials: true })
       }
     } catch (error) {
       console.error(error) 

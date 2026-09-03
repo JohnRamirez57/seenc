@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
-import type { addMediaParams, detailsParams, MovieDetailResponse, newMediaParams } from "../interfaces/media.interfaces.ts";
+import type { AuthenticatedRequest } from "../../../seencBE/backendMiddleware/jwtValidation";
+import type { addMediaParams, detailsParams, MovieDetailResponse } from "../interfaces/media.interfaces.ts";
 import { media_type } from "@prisma/client"
 import { MediaService, MediaUnitService, UserMediaService } from "../services/media.service.ts";
 import { handleError } from "../utils/error.util.ts";
@@ -29,24 +30,12 @@ class MediaController {
                 tmdb_id: tmdb_id
             }
 
-            let movieExists = await this.mediaService.checkMediaExists(tmdb_id)
+            const movieExists = await this.mediaService.checkMediaExists(tmdb_id)
+            if (!movieExists) return res.status(400).json({error: "Media doesn\'t exist!"})
             const movieDetails: MovieDetailResponse = (await this.tmdbService.getMovieDetails(movieParams)).data
             formatPosterPathing(movieDetails)
-            if (!movieExists) {
-                const createParams: newMediaParams = {
-                    title: movieDetails.title,
-                    media_type: media_type.MOVIE,
-                    description: movieDetails.overview,
-                    poster_url: movieDetails.poster_path!,
-                    tmdb_id: tmdb_id,
-                    release_date: new Date(movieDetails.release_date),
-                    created_at: new Date(),
-                    updated_at: new Date()
-                }
-                movieExists = await this.mediaService.createMedia(createParams)
-            }
 
-            if (!(await this.mediaUnitService.checkMediaUnitExists(tmdb_id, movieDetails.id))){
+            if (!(await this.mediaUnitService.checkMediaUnitExists(tmdb_id, movieDetails.id, false))){
                 const muParams = {
                     media_id: movieExists.id,
                     unit_number: movieDetails.id,
@@ -58,6 +47,7 @@ class MediaController {
                 }
     
                 await this.mediaUnitService.createMediaUnit(muParams)
+                
                 return res.status(200).json("Created media unit (movie)")
             }
 
@@ -86,23 +76,37 @@ class MediaController {
         }
     }
 
-    public addMedia = async (req: Request, res: Response) => {
+    public addMedia = async (req: AuthenticatedRequest, res: Response) => {
         try {
             const desiredMedia: addMediaParams = req.body;
-            const userContainsMedia = await this.mediaService.checkUserContainsMedia(desiredMedia.user_id, desiredMedia.tmdb_id);
+            const userId = req.user?.userID;
+            if (userId == null) {
+                return res.status(401).json({
+                    connected: false,
+                    message: "Authenticated user not found"
+                });
+            }
+
+            const mediaParams = {
+                ...desiredMedia,
+                release_date: new Date(desiredMedia.release_date),
+                created_at: desiredMedia.created_at ? new Date(desiredMedia.created_at) : new Date(),
+                updated_at: desiredMedia.updated_at ? new Date(desiredMedia.updated_at) : new Date(),
+            };
+            const userContainsMedia = await this.mediaService.checkUserContainsMedia(userId, mediaParams.tmdb_id);
             if (userContainsMedia) {
                 return res.status(409).json({
                     message: "Media already in user's library"
                 })
             }
     
-            let media = await this.mediaService.checkMediaExists(desiredMedia.tmdb_id)
+            let media = await this.mediaService.checkMediaExists(mediaParams.tmdb_id)
             if (!media) {
-                const { user_id, ...mediaData } = desiredMedia;
+                const { user_id: _userId, ...mediaData } = mediaParams;
                 media = await this.mediaService.createMedia(mediaData)
             }
     
-            await this.userMediaService.createUserMediaTable(desiredMedia.user_id, media.id);
+            await this.userMediaService.createUserMediaTable(userId, media.id);
     
             res.status(201).json({connected: true, message: "Successfully added media!"})
         } catch (error) {

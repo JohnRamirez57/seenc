@@ -1,37 +1,48 @@
-import type { media_type } from "@prisma/client"
+import type { media_type } from "@prisma/client";
 
-export interface retrievedResult{
-    adult?: boolean,
-    backdrop_path?: string,
-    genre_ids?: number[],
-    media_type: media_type,
-    original_language?: string,
-    original_title?: string,
-    overview: string,
-    popularity: number,
-    poster_path: string,
-    release_date?: string,
-    softcore?: string,
-    id: number,
-    title: string,
-    name?: string,
-    video?: boolean,
-    vote_average?: number,
-    vote_count?: number,
-    first_air_date?: string
+export interface retrievedResult {
+    adult?: boolean;
+    backdrop_path?: string;
+    genre_ids?: number[];
+    media_type: media_type;
+    original_language?: string;
+    original_title?: string;
+    overview: string;
+    popularity: number;
+    poster_path: string;
+    release_date?: string;
+    softcore?: string;
+    id: number;
+    title: string;
+    name?: string;
+    video?: boolean;
+    vote_average?: number;
+    vote_count?: number;
+    first_air_date?: string;
 }
 
-export interface retrievedMedia{
-  page: number,
-  results: retrievedResult[],
-  total_pages: number,
-  total_results: number
+export interface retrievedMedia {
+    page: number;
+    results: retrievedResult[];
+    total_pages: number;
+    total_results: number;
 }
 
 export interface RetrievedMovieCredits {
     id: number;
     cast: MovieCredit[];
     crew: CrewCredit[];
+}
+
+export interface EpisodeCredits {
+    id: number;
+    cast: MovieCredit[];
+    crew: CrewCredit[];
+    guest_stars: GuestStar[];
+}
+
+export interface NumberedEpisodeCredits extends EpisodeCredits {
+    epNum: number
 }
 
 export interface MovieCredit {
@@ -43,7 +54,7 @@ export interface MovieCredit {
     original_name: string;
     popularity: number;
     profile_path: string | null;
-    cast_id: number;
+    cast_id?: number;
     character: string;
     credit_id: string;
     order: number;
@@ -64,228 +75,229 @@ export interface CrewCredit {
 }
 
 export interface GuestStar {
-    character: string,
-    credit_id: string,
-    order: number,
-    adult: boolean,
-    gender: number,
-    id: number,
-    known_for_department: string,
-    name: string,
-    original_name: string,
-    popularity: number,
-    profile_path: string
+    character: string;
+    credit_id: string;
+    order: number;
+    adult: boolean;
+    gender: number;
+    id: number;
+    known_for_department: string;
+    name: string;
+    original_name: string;
+    popularity: number;
+    profile_path: string | null;
 }
 
 export interface EpisodeDetails {
-    air_date: string,
-    crew: CrewCredit[],
-    episode_number: number,
-    guest_stars: GuestStar[],
-    name: string,
-    overview: string,
-    id: number,
-    production_code: string,
-    runtime: number,
-    season_number: number,
-    still_path: string,
-    vote_average: number,
-    vote_count: number
+    air_date: string;
+    crew: CrewCredit[];
+    episode_number: number;
+    guest_stars: GuestStar[];
+    name: string;
+    overview: string;
+    id: number;
+    production_code: string;
+    runtime: number;
+    season_number: number;
+    still_path: string;
+    vote_average: number;
+    vote_count: number;
 }
 
 export interface TVDetails {
-    adult: boolean,
-    backdrop_path: string,
-    created_by: CreatedByTVCredit[],
-    episode_run_time: number[],
-    first_air_date: string,
-    genres: Genre[],
-    homepage: string,
-    id: number,
-    in_production: boolean,
-    languages: string[],
-    last_air_date: string,
-    last_episode_to_air: lastEpisodeAiring,
-    name: string,
-    next_episode_to_air: string,
-    networks: Network[],
-    number_of_episodes: number,
-    number_of_seasons: number,
-    origin_country: string[],
-    original_language: string,
-    original_name: string,
-    overview: string,
-    popularity: number,
-    poster_path: string,
-    production_companies: ProductionCompany[],
-    production_countries: ProductionCountry[],
-    seasons: Season[],
-    spoken_languages: SpokenLanguage[],
-    status: string,
-    tagline: string,
-    type: string,
-    vote_average: number,
-    vote_count: number
+    adult: boolean;
+    backdrop_path: string;
+    created_by: CreatedByTVCredit[];
+    episode_run_time: number[];
+    first_air_date: string;
+    genres: Genre[];
+    homepage: string;
+    id: number;
+    in_production: boolean;
+    languages: string[];
+    last_air_date: string;
+    last_episode_to_air: lastEpisodeAiring;
+    name: string;
+    next_episode_to_air: string;
+    networks: Network[];
+    number_of_episodes: number;
+    number_of_seasons: number;
+    origin_country: string[];
+    original_language: string;
+    original_name: string;
+    overview: string;
+    popularity: number;
+    poster_path: string;
+    production_companies: ProductionCompany[];
+    production_countries: ProductionCountry[];
+    seasons: Season[];
+    spoken_languages: SpokenLanguage[];
+    status: string;
+    tagline: string;
+    type: string;
+    vote_average: number;
+    vote_count: number;
 }
 
 export interface CreatedByTVCredit {
-    id: number,
-    credit_id: string,
-    name: string,
-    gender: number,
-    profile_path: string
+    id: number;
+    credit_id: string;
+    name: string;
+    gender: number;
+    profile_path: string;
 }
 
 export interface MovieDetailResponse {
-  adult: boolean;
-  backdrop_path: string | null;
-
-  belongs_to_collection: {
-    id: number;
-    name: string;
-    poster_path: string | null;
+    adult: boolean;
     backdrop_path: string | null;
-  } | null;
 
-  budget: number;
-  genres: {
+    belongs_to_collection: {
+        id: number;
+        name: string;
+        poster_path: string | null;
+        backdrop_path: string | null;
+    } | null;
+
+    budget: number;
+    genres: {
+        id: number;
+        name: string;
+    }[];
+
+    homepage: string | null;
     id: number;
-    name: string;
-  }[];
+    imdb_id: string | null;
+    origin_country: string[];
+    original_language: string;
+    original_title: string;
+    overview: string;
+    popularity: number;
+    poster_path: string | null;
 
-  homepage: string | null;
-  id: number;
-  imdb_id: string | null;
-  origin_country: string[];
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  poster_path: string | null;
+    production_companies: {
+        id: number;
+        logo_path: string | null;
+        name: string;
+        origin_country: string;
+    }[];
 
-  production_companies: {
-    id: number;
-    logo_path: string | null;
-    name: string;
-    origin_country: string;
-  }[];
+    production_countries: {
+        iso_3166_1: string;
+        name: string;
+    }[];
 
-  production_countries: {
-    iso_3166_1: string;
-    name: string;
-  }[];
+    release_date: string;
+    revenue: number;
+    runtime: number | null;
 
-  release_date: string;
-  revenue: number;
-  runtime: number | null;
-  spoken_languages: {
-    english_name: string;
-    iso_639_1: string;
-    name: string;
-  }[];
+    spoken_languages: {
+        english_name: string;
+        iso_639_1: string;
+        name: string;
+    }[];
 
-  status: string;
-  tagline: string | null;
-  title: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
+    status: string;
+    tagline: string | null;
+    title: string;
+    video: boolean;
+    vote_average: number;
+    vote_count: number;
 }
 
 export interface Genre {
-    id: number,
-    name: string
+    id: number;
+    name: string;
 }
 
 export interface lastEpisodeAiring {
-    id: number,
-    name: string,
-    overview: string,
-    vote_average: number,
-    vote_count: number,
-    air_date: string,
-    episode_number: number,
-    production_code: string,
-    runtime: number,
-    season_number: number,
-    show_id: number,
-    still_path: string
+    id: number;
+    name: string;
+    overview: string;
+    vote_average: number;
+    vote_count: number;
+    air_date: string;
+    episode_number: number;
+    production_code: string;
+    runtime: number;
+    season_number: number;
+    show_id: number;
+    still_path: string;
 }
 
 export interface Network {
-    id: number,
-    logo_path: string,
-    name: string,
-    origin_country: string
+    id: number;
+    logo_path: string;
+    name: string;
+    origin_country: string;
 }
 
 export interface ProductionCompany {
-    id: number,
-    logo_path: string,
-    name: string,
-    origin_country: string
+    id: number;
+    logo_path: string;
+    name: string;
+    origin_country: string;
 }
 
 export interface ProductionCountry {
-    iso_3166_1: string,
-    name: string
+    iso_3166_1: string;
+    name: string;
 }
 
 export interface Season {
-    air_date: string,
-    episode_count: number,
-    id: number,
-    name: string,
-    overview: string,
-    poster_path: string,
-    season_number: number,
-    vote_average: number
+    air_date: string;
+    episode_count: number;
+    id: number;
+    name: string;
+    overview: string;
+    poster_path: string;
+    season_number: number;
+    vote_average: number;
 }
 
 export interface SpokenLanguage {
-    english_name: string,
-    iso_639_1: string,
-    name: string
+    english_name: string;
+    iso_639_1: string;
+    name: string;
 }
 
 export interface movieOrTvResult {
-  title: string,
-  poster_url?: string,
-  tmdb_id: number,
-  description: string,
-  media_type: string,
-  release_date?: string,
-  created_at: string,
-  updated_at: string,
-  popularity: number
+    title: string;
+    poster_url?: string;
+    tmdb_id: number;
+    description: string;
+    media_type: string;
+    release_date?: string;
+    created_at: string;
+    updated_at: string;
+    popularity: number;
 }
 
-export interface searchParams{
-    query: string,
-    api_key: string,
-    language: string,
-    page: number,
-    include_adult: boolean
+export interface searchParams {
+    query: string;
+    api_key: string;
+    language: string;
+    page: number;
+    include_adult: boolean;
 }
 
-export interface detailsParams{
-    api_key: string,
-    language: string,
-    tmdb_id: number
+export interface detailsParams {
+    api_key: string;
+    language: string;
+    tmdb_id: number;
 }
 
-export interface newMediaParams{
-    title: string,
-    media_type: media_type,
-    description: string,
-    poster_url: string,
-    isbn?: string,
-    tmdb_id: number,
-    release_date: Date,
-    created_at: Date,
-    updated_at: Date
+export interface newMediaParams {
+    title: string;
+    media_type: media_type;
+    description: string;
+    poster_url: string;
+    isbn?: string;
+    tmdb_id: number;
+    release_date: Date;
+    created_at: Date;
+    updated_at: Date;
 }
 
-export interface addMediaParams extends newMediaParams{
-    user_id: number
+export interface addMediaParams extends newMediaParams {
+    user_id: number;
 }
