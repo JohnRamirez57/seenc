@@ -1,8 +1,10 @@
 import { formatPosterPathing } from "../utils/format.util";
 import { PrismaService } from "./prisma.service";
 import { TMDBService } from "./tmdb.service";
-import type { EpisodeCredits, RetrievedMovieCredits } from "../interfaces/media.interfaces";
+import type { RetrievedMovieCredits } from "../interfaces/media.interfaces";
 import { MediaUnitService } from "./media.service";
+import { watch_status } from "@prisma/client";
+import { handleError } from "../utils/error.util";
 
 export class MiscService {
     private readonly prisma: PrismaService;
@@ -13,6 +15,59 @@ export class MiscService {
         this.prisma = new PrismaService()
         this.tmdb = new TMDBService();
         this.mediaUnit = new MediaUnitService();
+    }
+
+    public updateProgressWatchStatus = async (user_id: number, tmdb_id: number, ep_num: number, new_status: watch_status, season_num?: number) => {
+        const userProgress = await this.getUserProgress(user_id, tmdb_id, ep_num, season_num);
+        if (!userProgress) return false;
+        await this.prisma.updateUserProgressWatchStatus(userProgress.id, new_status)
+        return true;
+    }
+
+    public updateLastViewedProgress = async (user_id: number, tmdb_id: number, ep_num: number, season_num?: number) => {
+        const userProgress = await this.getUserProgress(user_id, tmdb_id, ep_num, season_num);
+        if (!userProgress) return false;
+        await this.prisma.updateUserLastViewedProgress(userProgress.id, new Date())
+        return true;
+    }
+
+    public getUserProgress = async (user_id: number, tmdb_id: number, ep_num: number, season_num?: number) => {
+        const media = await this.prisma.findMedia(tmdb_id);
+        // console.error("Media: ", media)
+        if (!media) throw new Error("Media doesn\'t exist")
+        const isMovie: boolean = ep_num === -1;
+        const currUnit = await this.prisma.findMediaUnit(tmdb_id, ep_num, isMovie, season_num);
+        
+        const foundUserProg = await this.prisma.findUserProgress(user_id, media.id, currUnit?.id)
+        if (!foundUserProg) return null;
+        return foundUserProg;       
+    }
+
+    public createUserProgress = async (uID: number, tmdbID: number, unit_number: number, season_num?: number) => {
+        try {
+            const user_id = Number(uID)
+            const tmdb_id = Number(tmdbID);
+            const media = await this.prisma.findMedia(tmdb_id);
+            if (!media) return new Error("Media not found")
+            // movies have NULL as unit_number, so -1 indicates NULL
+            const isMovie = unit_number === -1;
+            const unit = await this.prisma.findMediaUnit(tmdb_id, unit_number, isMovie, season_num);
+            if (!unit) return new Error("Media unit not found")
+            const progressData = {
+                user_id,
+                media_id: media.id,
+                last_viewed: new Date(),
+                current_unit_id: unit.id,
+                status: watch_status.WATCHING,
+            }
+
+            const newProg = await this.prisma.createUserProgress(progressData)
+            if (!newProg) return new Error("Error making user progress!")
+
+            return (newProg)
+        } catch (error) {
+            return new Error(handleError(error))
+        }
     }
 
     public async createCharacterAppearancesFromTV(

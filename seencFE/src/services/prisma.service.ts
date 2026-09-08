@@ -1,3 +1,4 @@
+import { watch_status } from "@prisma/client";
 import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces";
 // import type { characterParams, mediaUnitParams } from "../interfaces/media.interfaces.ts";
 import { prisma } from "../prismaClient/prisma";
@@ -11,6 +12,29 @@ export class PrismaService {
     private readonly prismaClient = prisma;
     private readonly tmdbService = new TMDBService();
 
+    public updateUserProgressWatchStatus = async (progress_id: number, new_status: watch_status) => {
+        return this.prismaClient.user_progress.update({
+            where: {
+                id: progress_id
+            },
+
+            data: {
+                status: new_status
+            }
+        })
+    }
+
+    public updateUserLastViewedProgress = async (progress_id: number, new_last_viewed: Date) => {
+        return this.prismaClient.user_progress.update({
+            where: {
+                id: progress_id
+            },
+            data: {
+                last_viewed: new_last_viewed
+            }
+        })
+    }
+
     public createUser = async (email: string, username: string, password: string) => {
         const passwordHash = await bcrypt.hash(password, saltRounds)
         return this.prismaClient.users.create({
@@ -23,9 +47,35 @@ export class PrismaService {
         })
     }
 
+    public createUserProgress = async (userPayload: any) => {
+        return prisma.user_progress.create({
+            data: userPayload
+        })
+    }
+
     public findUser = async (userId: number) => {
         return this.prismaClient.users.findUnique({
             where: {id: userId}
+        })
+    }
+
+    public findUserProgress = async (user_id: number, media_id: number, current_unit_id?: number) => {
+        // maybe if not movie, find unit by season num and ep number (tmdb)
+        if (current_unit_id){
+            return this.prismaClient.user_progress.findFirst({
+                where: {
+                    user_id: user_id,
+                    media_id: media_id,
+                    current_unit_id: current_unit_id
+                }
+            })
+        }
+
+        return this.prismaClient.user_progress.findFirst({
+            where: {
+                user_id: user_id,
+                media_id: media_id
+            }
         })
     }
 
@@ -58,7 +108,7 @@ export class PrismaService {
         })
     }
 
-    public findMediaUnit = async (tmdb_id: number, unit_number: number, checkAsMovie: boolean = false) => {
+    public findMediaUnit = async (tmdb_id: number, unit_number: number, checkAsMovie: boolean = false, season_id?: number) => {
         if (checkAsMovie){
             return prisma.media_unit.findFirst({
             where: {
@@ -66,6 +116,16 @@ export class PrismaService {
                 season_id: null
             }
         })
+        }
+
+        if (season_id && season_id != -1) { // if precision matters
+            return prisma.media_unit.findFirst({
+                where: {
+                    tmdb_id: tmdb_id,
+                    unit_number: unit_number, // episode number
+                    season_id: season_id
+                }
+            })
         }
 
         // for non-movies (tv in particular)

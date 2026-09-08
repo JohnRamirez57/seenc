@@ -11,6 +11,7 @@ import { ToolkitManager } from './toolkit/toolkitManager/toolkitClass.ts'
 import { login, logout } from './toolkit/slices/authSlice.ts'
 import { useSelector } from 'react-redux'
 import type { RootState } from './toolkit/store/store.ts'
+import { watch_status } from '@prisma/client'
 
 const tkManager = new ToolkitManager()
 
@@ -86,6 +87,37 @@ const handleLogIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     console.error("User not found!");
     return;
   }
+
+  // await axios.post(
+  //   `${apiBaseUrl}/user/create-progress`,
+  //   {
+  //     tmdb_id: 890,
+  //     unit_number: 1,
+  //     season_number: 1,
+  //   },
+  //   {
+  //     withCredentials: true,
+  //   }
+  // );
+  // console.log("User prog: ", await axios.get(`${apiBaseUrl}/user/get-progress`, { params: {
+  //   tmdb_id: 890,
+  //   unit_number: 1,
+  //   season_number: 1
+  // }, withCredentials: true}))
+
+  // console.log(await axios.post(
+  //   `${apiBaseUrl}/user/update-watch-progress`,
+  //   {
+  //     tmdb_id: 890,
+  //     unit_number: 1,
+  //     new_status: watch_status.COMPLETED,
+  //     season_number: 1,
+  //   },
+  //   {
+  //     withCredentials: true,
+  //   }
+  // ));
+
   const userAuth = {
     username: username,
     id: user.data.id
@@ -103,6 +135,7 @@ const handleLogOut = async () => {
   }
   try {
     await axios.post(`${apiBaseUrl}/user/log-out`, {}, { withCredentials: true })
+
   } catch (error) {
     console.error("Error logging out: ", error)
   }

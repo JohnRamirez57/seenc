@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import Joi from "joi";
+import { watch_status } from "@prisma/client";
 
 export function validateBody(schema: Joi.ObjectSchema) {
     return (
@@ -73,6 +74,31 @@ export const getUserSchema = Joi.object({
 export const logInSchema = Joi.object({
     username: Joi.string().min(1).required(),
     password: Joi.string().min(1).required()
+})
+
+export const updateLastViewedProgressSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer(),
+    season_number: Joi.number().integer()
+})
+
+export const updateWatchProgressSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer(),
+    new_status: Joi.string().valid(...Object.values(watch_status)).required(),
+    season_number: Joi.number().integer(),
+})
+
+export const createProgressSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    season_number: Joi.number().integer()
+})
+
+export const getProgressSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer(),
+    season_number: Joi.number().integer()
 })
 
 export const signUpSchema = Joi.object({

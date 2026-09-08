@@ -1,11 +1,16 @@
 import type { Request, Response } from "express";
 import { MiscService } from "../services/misc.serivce";
+import { PrismaService } from "../services/prisma.service";
+import { handleError } from "../utils/error.util";
+import { error } from "console";
 
 class MiscController {
     private readonly misc: MiscService;
+    private readonly prisma: PrismaService;
 
     constructor(){
         this.misc = new MiscService();
+        this.prisma = new PrismaService();
     }
 
     public createTVAppearances = async (req: Request, res: Response) => {
@@ -27,8 +32,8 @@ class MiscController {
             console.error(error)
             return res.status(400).json({error: error})
         }
-
     }
+
 }
 
 export const miscController = new MiscController();

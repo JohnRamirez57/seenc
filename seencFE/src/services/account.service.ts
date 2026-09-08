@@ -1,4 +1,3 @@
-// @ts-expect-error bcrypt does not provide TypeScript declarations in this project.
 import bcrypt from "bcrypt"
 import type { Request, Response } from "express";
 import { PrismaService } from "./prisma.service";

@@ -8,11 +8,9 @@ import dataRoutes from "../seencFE/src/routes/data.routes.ts";
 
 /* 
 Implement: 
-!user_progress
 !questions
 !knowledges
 !events
-!character_appearances
 */
 
 const app = express();
