@@ -1,4 +1,4 @@
-import { watch_status } from "@prisma/client";
+import { knowledge_category, watch_status } from "@prisma/client";
 import type { MovieCredit, newMediaParams } from "../interfaces/media.interfaces";
 // import type { characterParams, mediaUnitParams } from "../interfaces/media.interfaces.ts";
 import { prisma } from "../prismaClient/prisma";
@@ -20,6 +20,24 @@ export class PrismaService {
 
             data: {
                 status: new_status
+            }
+        })
+    }
+
+    public findKnowledgeUnit = async (unit_id: number) => {
+        return prisma.knowledge.findFirst({
+            where: {
+                unit_id
+            }
+        })
+    }
+
+    public createKnowledgeUnit = async (unit_id: number, category: knowledge_category, content: string) => {
+        return prisma.knowledge.create({
+            data: {
+                unit_id,
+                category,
+                content
             }
         })
     }
