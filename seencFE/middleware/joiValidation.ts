@@ -89,6 +89,20 @@ export const updateWatchProgressSchema = Joi.object({
     season_number: Joi.number().integer(),
 })
 
+export const findKnowledgeSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    season_number: Joi.number().integer(),
+})
+
+export const createKnowledgeSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    category: Joi.string().valid(...Object.values(watch_status)).required(),
+    content: Joi.string(),
+    season_number: Joi.number().integer(),
+})
+
 export const createProgressSchema = Joi.object({
     tmdb_id: Joi.number().integer().min(0).required(),
     unit_number: Joi.number().integer().required(),

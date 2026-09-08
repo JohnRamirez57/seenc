@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import tmdbRoutes from "../seencFE/src/routes/tmdb.routes.ts";
 import userRoutes from "../seencFE/src/routes/user.routes.ts";
 import dataRoutes from "../seencFE/src/routes/data.routes.ts";
+import aiRoutes from "../seencFE/src/routes/ai.routes.ts"
 
 /* 
 Implement: 
@@ -25,6 +26,7 @@ app.use(cors({
 app.use("/api/tmdb", tmdbRoutes);
 app.use("/api/data", dataRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes)
 
 const PORT = 3000;
 app.listen(PORT, () => {
