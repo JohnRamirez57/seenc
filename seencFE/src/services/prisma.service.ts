@@ -32,6 +32,28 @@ export class PrismaService {
         })
     }
 
+    public createQuestionUnit = async (title: string, user_id: number, unit_id: number, question: string, answer?: string) => {
+        return prisma.questions.create({
+            data: {
+                title,
+                user_id,
+                unit_id,
+                question,
+                answer,
+                created_at: new Date()
+            }
+        })
+    }
+
+    public findQuestionUnits = async (user_id: number, unit_id: number) => {
+        return prisma.questions.findMany({
+            where: {
+                user_id,
+                unit_id
+            }
+        })
+    }
+
     public createKnowledgeUnit = async (unit_id: number, category: knowledge_category, content: string) => {
         return prisma.knowledge.create({
             data: {

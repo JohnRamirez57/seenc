@@ -9,8 +9,6 @@ import aiRoutes from "../seencFE/src/routes/ai.routes.ts"
 
 /* 
 Implement: 
-!questions
-!knowledges
 !events
 */
 

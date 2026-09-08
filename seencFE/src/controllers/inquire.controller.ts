@@ -1,12 +1,44 @@
 import type { Request, Response } from "express";
 import { InquisitionService } from "../services/inquisition.service";
 import { handleError } from "../utils/error.util";
+import type { AuthenticatedRequest } from "../../../seencBE/backendMiddleware/jwtValidation";
 
 class InquireController {
     private readonly inquireService;
 
     constructor() {
         this.inquireService = new InquisitionService();
+    }
+
+    public findQuestions = async (req: AuthenticatedRequest, res: Response) => {
+        try {
+            const user_id = req.user?.userID;
+            const tmdb_id = Number(req.query.tmdb_id);
+            const ep_num = Number(req.query.unit_number);
+            const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
+            const questionUnits = await this.inquireService.findQuestions(user_id!, tmdb_id, ep_num, season_number)
+            res.status(200).json(questionUnits)
+        } catch (error) {
+            console.error(error)
+            res.status(400).json({error: handleError(error)})
+        }
+    }
+
+    public createQuestion = async (req: AuthenticatedRequest, res: Response) => {
+        try {
+            const user_id = req.user?.userID
+            const tmdb_id: number = req.body.tmdb_id;
+            const ep_num: number = req.body.unit_number;
+            const title: string = req.body.title;
+            const question: string = req.body.question;
+            const answer = req.body?.answer;
+            const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
+            await this.inquireService.createQuestion(user_id!, tmdb_id, ep_num, title, question, answer, season_number)
+            res.status(200).json({message: "Successfully created question unit!"})
+        } catch (error) {
+            console.error(error)
+            res.status(400).json({error: handleError(error)})
+        }
     }
 
     public findKnowledge = async (req: Request, res: Response) => {

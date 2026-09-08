@@ -71,6 +71,31 @@ export const getUserSchema = Joi.object({
     id: Joi.string().min(1).required()
 })
 
+/* 
+                       const tmdb_id: number = req.body.tmdb_id;
+            const ep_num: number = req.body.unit_number;
+            const title: string = req.body.title;
+            const question: string = req.body.question;
+            const answer = req.body?.answer;
+            const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
+*/
+
+
+export const createQuestionSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    title: Joi.string().min(1).required(),
+    question: Joi.string().min(1).required(),
+    answer: Joi.string().min(1),
+    season_number: Joi.number().integer()
+})
+
+export const findQuestionsSchema = Joi.object({
+    tmdb_id: Joi.number().integer().required().min(0),
+    unit_number: Joi.number().integer().required(),
+    season_number: Joi.number().integer()
+})
+
 export const logInSchema = Joi.object({
     username: Joi.string().min(1).required(),
     password: Joi.string().min(1).required()
