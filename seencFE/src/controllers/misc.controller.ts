@@ -1,8 +1,6 @@
 import type { Request, Response } from "express";
 import { MiscService } from "../services/misc.serivce";
 import { PrismaService } from "../services/prisma.service";
-import { handleError } from "../utils/error.util";
-import { error } from "console";
 
 class MiscController {
     private readonly misc: MiscService;

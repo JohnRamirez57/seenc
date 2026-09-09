@@ -10,6 +10,40 @@ class InquireController {
         this.inquireService = new InquisitionService();
     }
 
+    public createEvent = async (req: Request, res: Response) => {
+        try {
+            const description: string = req.body.description;
+            const importance: number = req.body.importance;
+            const tmdb_id: number = req.body.tmdb_id;
+            const unit_number: number = req.body.unit_number;
+            const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
+    
+            const eventUnit = await this.inquireService.createEvent(description, importance, tmdb_id, unit_number, season_number)
+    
+            res.status(200).json(eventUnit)
+            
+        } catch (error) {
+            console.error(error)
+            res.status(400).json({error: handleError(error)})
+        }
+    }
+
+    public findEvents = async (req: Request, res: Response) => {
+        try {
+            const tmdb_id: number = req.body.tmdb_id;
+            const unit_number: number = req.body.unit_number;
+            const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
+    
+            const eventUnit = await this.inquireService.findEvents(tmdb_id, unit_number, season_number)
+    
+            res.status(200).json(eventUnit)
+            
+        } catch (error) {
+            console.error(error)
+            res.status(400).json({error: handleError(error)})
+        }
+    }
+
     public findQuestions = async (req: AuthenticatedRequest, res: Response) => {
         try {
             const user_id = req.user?.userID;

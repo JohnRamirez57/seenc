@@ -24,6 +24,24 @@ export class PrismaService {
         })
     }
 
+    public findEventUnits = async (unit_id: number) => {
+        return prisma.events.findFirst({
+            where: {
+                unit_id
+            }
+        })
+    }
+
+    public createEventUnit = async (unit_id: number, description: string, importance: number) => {
+        return prisma.events.create({
+            data: {
+                unit_id,
+                description,
+                importance
+            }
+        })
+    }
+
     public findKnowledgeUnit = async (unit_id: number) => {
         return prisma.knowledge.findFirst({
             where: {

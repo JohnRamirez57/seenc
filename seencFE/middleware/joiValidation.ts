@@ -72,14 +72,26 @@ export const getUserSchema = Joi.object({
 })
 
 /* 
-                       const tmdb_id: number = req.body.tmdb_id;
-            const ep_num: number = req.body.unit_number;
-            const title: string = req.body.title;
-            const question: string = req.body.question;
-            const answer = req.body?.answer;
+            const description: string = req.body.description;
+            const importance: number = req.body.importance;
+            const tmdb_id: number = req.body.tmdb_id;
+            const unit_number: number = req.body.unit_number;
             const season_number = req.query.season_number ? Number(req.query.season_number) : undefined;
 */
 
+export const createEventSchema = Joi.object({
+    description: Joi.string().min(1).required(),
+    importance: Joi.number().integer().required().min(0),
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    season_number: Joi.number().integer()
+})
+
+export const findEventsSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(0).required(),
+    unit_number: Joi.number().integer().required(),
+    season_number: Joi.number().integer()
+})
 
 export const createQuestionSchema = Joi.object({
     tmdb_id: Joi.number().integer().min(0).required(),

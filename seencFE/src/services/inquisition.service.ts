@@ -10,6 +10,24 @@ export class InquisitionService {
         this.prisma = new PrismaService();
     }
 
+    public createEvent = async (description: string, importance: number, tmdb_id: number, unit_number: number, season_number?: number) => {
+        const season_id = season_number ? await this.retrieveSeasonID(season_number, tmdb_id) : season_number;
+        const checkAsMovie = unit_number === -1;
+        const unit = await this.prisma.findMediaUnit(tmdb_id, unit_number, checkAsMovie, season_id)
+        if (!unit) throw new Error("Error finding unit!")
+        const event = await this.prisma.createEventUnit(unit.id, description, importance)
+        return event;
+    }
+
+    public findEvents = async (tmdb_id: number, unit_number: number, season_number?: number) => {
+        const season_id = season_number ? await this.retrieveSeasonID(season_number, tmdb_id) : season_number;
+        const checkAsMovie = unit_number === -1;
+        const unit = await this.prisma.findMediaUnit(tmdb_id, unit_number, checkAsMovie, season_id)
+        if (!unit) throw new Error("Error finding unit!")
+        const eventUnits = await this.prisma.findEventUnits(unit.id)
+        return eventUnits;
+    }
+
     private retrieveSeasonID = async (season_number: number, tmdb_id: number) => {
         const media = await this.prisma.findMedia(tmdb_id);
         if (!media) return;
