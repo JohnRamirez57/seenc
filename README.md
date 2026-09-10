@@ -6,7 +6,7 @@ The project is currently in active development, with most of my focus on complet
 
 ## Current Progress
 
-### Backend — Mostly Complete
+### Backend: Mostly Complete
 
 The backend is built with **TypeScript, Node.js, Express, PostgreSQL, and Prisma** and currently supports:
 
@@ -22,7 +22,7 @@ The backend is built with **TypeScript, Node.js, Express, PostgreSQL, and Prisma
 
 I am currently finishing the remaining backend relationships and logic for areas such as user progress, character appearances, events, knowledge records, and questions.
 
-### Frontend — In Progress
+### Frontend: In Progress
 
 The frontend uses **React, TypeScript, Redux Toolkit, Tailwind CSS, and Vite**.
 
