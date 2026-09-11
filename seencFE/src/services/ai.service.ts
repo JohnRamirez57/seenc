@@ -248,7 +248,7 @@ Spoiler boundary: ${boundary}
 ${sourceText.slice(0, 45_000)}
 </sources>`;
 
-        const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+        const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
         try {
             const response = await axios.post<GeminiResponse>(
                 `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
@@ -269,7 +269,21 @@ ${sourceText.slice(0, 45_000)}
                 .trim();
             if (!answer) throw new Error("Gemini returned an empty response");
             return answer;
-        } catch {
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 404) {
+                    throw new AIServiceError(
+                        `The configured Gemini model is unavailable. Set GEMINI_MODEL to gemini-3.5-flash-lite.`,
+                        503,
+                    );
+                }
+                if (error.response?.status === 400 || error.response?.status === 403) {
+                    throw new AIServiceError("The Gemini API key is invalid or does not have API access.", 503);
+                }
+                if (error.response?.status === 429) {
+                    throw new AIServiceError("The Gemini free-tier limit has been reached. Try again later.", 429);
+                }
+            }
             throw new AIServiceError("Gemini could not prepare an answer. Please try again.", 502);
         }
     };

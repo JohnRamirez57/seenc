@@ -1,6 +1,5 @@
 import { media_type } from "@prisma/client"
-import type { MovieCredit, movieOrTvResult, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, retrievedResult } from "../interfaces/media.interfaces"
-import type { AxiosResponse } from "axios";
+import type { movieOrTvResult, retrievedMedia, retrievedResult } from "../interfaces/media.interfaces"
 
 const posterImagePath = "https://image.tmdb.org/t/p/w500"
 const backupPoster = "https://placehold.net/400x600.png"
