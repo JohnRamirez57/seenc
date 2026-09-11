@@ -77,15 +77,21 @@ export class AIService {
         )) {
             throw new AIServiceError("Your watch progress does not include this point in the story yet.", 409);
         }
+        if (isMovie && String(progress.status).toUpperCase() !== "COMPLETED") {
+            throw new AIServiceError(
+                "Mark this movie as completed before asking questions that may reveal its ending.",
+                409,
+            );
+        }
 
         this.checkConfiguration();
-        const sources = await this.researchUnit(
+        let sources = await this.researchUnit(
             media.title,
             String(media.media_type),
             input.unit_number,
             input.season_number,
         );
-        const generatedAnswer = await this.createSpoilerSafeAnswer(
+        let generatedAnswer = await this.createSpoilerSafeAnswer(
             media.title,
             String(media.media_type),
             input.question,
@@ -93,6 +99,31 @@ export class AIService {
             input.season_number,
             sources,
         );
+
+        // General recaps often omit small details. If Gemini cannot verify an answer,
+        // make one focused search using the user's question before declining.
+        if (this.needsFocusedResearch(generatedAnswer)) {
+            try {
+                const focusedSources = await this.researchUnit(
+                    media.title,
+                    String(media.media_type),
+                    input.unit_number,
+                    input.season_number,
+                    input.question,
+                );
+                sources = this.combineSources(focusedSources, sources);
+                generatedAnswer = await this.createSpoilerSafeAnswer(
+                    media.title,
+                    String(media.media_type),
+                    input.question,
+                    input.unit_number,
+                    input.season_number,
+                    sources,
+                );
+            } catch {
+                // Keep the original safe answer if the optional focused retry fails.
+            }
+        }
         const answer = this.addSourceList(generatedAnswer, sources);
 
         const savedQuestion = await this.prisma.createQuestionUnit(
@@ -142,11 +173,13 @@ export class AIService {
         mediaType: string,
         unitNumber: number,
         seasonNumber?: number,
+        question?: string,
     ): Promise<ResearchSource[]> => {
         const boundary = mediaType.toUpperCase() === "MOVIE"
             ? "complete movie plot recap and analysis"
             : `season ${seasonNumber} episode ${unitNumber} recap and analysis`;
-        const cacheKey = `${title}:${boundary}`.toLowerCase();
+        const questionFocus = question ? this.searchQuestion(question) : "";
+        const cacheKey = `${title}:${boundary}:${questionFocus}`.toLowerCase();
         const cached = this.researchCache.get(cacheKey);
         if (cached && cached.expiresAt > Date.now()) return cached.sources;
 
@@ -154,7 +187,7 @@ export class AIService {
             const searchResponse = await axios.post<TavilySearchResponse>(
                 "https://api.tavily.com/search",
                 {
-                    query: `"${title}" ${boundary}`,
+                    query: `"${title}" ${boundary}${questionFocus ? ` ${questionFocus}` : ""}`,
                     topic: "general",
                     search_depth: "basic",
                     max_results: 5,
@@ -194,7 +227,13 @@ export class AIService {
             const sources = searchResults.map(result => ({
                 title: result.title!,
                 url: result.url!,
-                content: this.cleanContent(extracted.get(result.url!) || result.content || ""),
+                // Tavily's search excerpt is centered on the query, while an extracted
+                // page starts at the top. Keep the excerpt first so a later scene is not
+                // lost when long pages are shortened for Gemini.
+                content: this.cleanContent([
+                    result.content,
+                    extracted.get(result.url!),
+                ].filter(Boolean).join("\n\n")),
             })).filter(source => source.content.length > 40);
 
             if (!sources.length) {
@@ -227,9 +266,14 @@ export class AIService {
             `[${index + 1}] ${source.title}\nURL: ${source.url}\n${source.content}`,
         ).join("\n\n");
 
+        const isMovie = mediaType.toUpperCase() === "MOVIE";
+        const boundaryRule = isMovie
+            ? "The user has completed this movie. Its ending and every event within this movie are allowed. Do not withhold those facts as spoilers. Do not reveal sequels or later franchise entries."
+            : `The user has watched through season ${seasonNumber}, episode ${unitNumber}. Do not reveal anything from a later episode.`;
         const systemInstruction = `You answer questions for Seenc, a spoiler-aware media companion.
 
 Rules:
+- ${boundaryRule}
 - Use only facts revealed at or before that boundary.
 - A retrieved page may mention later events. Ignore every fact that occurs after the boundary.
 - Do not use later character identities, relationships, outcomes, deaths, locations, episode titles, or retrospective explanations.
@@ -300,6 +344,30 @@ ${sourceText.slice(0, 45_000)}
             .replace(/\n{3,}/g, "\n\n")
             .trim()
             .slice(0, 9_000);
+    }
+
+    private searchQuestion(question: string) {
+        return question
+            .replace(/[<>\r\n]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 240);
+    }
+
+    private needsFocusedResearch(answer: string) {
+        const normalized = answer.toLowerCase();
+        return normalized.includes("could not verify")
+            || normalized.includes("couldn't verify")
+            || normalized.includes("without risking a spoiler")
+            || normalized.includes("supplied sources do not support");
+    }
+
+    private combineSources(primary: ResearchSource[], secondary: ResearchSource[]) {
+        const sources = new Map<string, ResearchSource>();
+        for (const source of [...primary, ...secondary]) {
+            if (!sources.has(source.url)) sources.set(source.url, source);
+        }
+        return [...sources.values()].slice(0, 6);
     }
 
     private addSourceList(answer: string, sources: ResearchSource[]) {
