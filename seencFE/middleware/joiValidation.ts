@@ -9,7 +9,7 @@ export function validateBody(schema: Joi.ObjectSchema) {
         next: NextFunction
     ) => {
         const { error } = schema.validate(req.body);
-        console.error("Body Params: ", req.body)
+        // console.error("Body Params: ", req.body)
         // console.log("Error: ", error)
         if (error) {
             console.error(error.details[0].message)
@@ -29,7 +29,7 @@ export function validateQuery(schema: Joi.ObjectSchema) {
         next: NextFunction
     ) => {
         const { error } = schema.validate(req.query);
-        console.error("Query Params: ", req.query)
+        // console.error("Query Params: ", req.query)
 
         if (error) {
             console.error(error.details[0].message)

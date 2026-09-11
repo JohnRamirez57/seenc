@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { api, imageUrl, message } from '../../client/api'
 import type { AskQuestionResponse, ChatMessage, Media } from '../../client/api'
@@ -194,6 +194,20 @@ function FilterButton({ label, value, current, onSelect }: FilterButtonProps) {
 }
 
 function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => void }) {
+  const historyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const history = historyRef.current
+    if (!history) return
+
+    const frame = requestAnimationFrame(() => {
+      history.scrollTo({
+        top: history.scrollHeight,
+        behavior: reducedMotion(),
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [slot?.media.tmdb_id, slot?.messages.length])
   if (!slot) {
     return <div className="chat-record chat-record-empty">Select a saved story to open its record.</div>
   }
@@ -217,10 +231,10 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
 
       <AskPanel media={slot.media} onCreated={onCreated} />
 
-      <div className="chat-history">
-        <div className="flex flex-col-reverse">
+      <div className="chat-history" ref={historyRef}>
+        <div className="flex flex-col-reverse" id="chat-messages">
           {slot.messages.length ? slot.messages.map(item => (
-            <section className="chat-exchange" key={item.id}>
+            <section className="chat-exchange" key={item.id} id="chat-exchange">
               <div className="chat-question">
                 <span>YOU / {formatUnit(item)}</span>
                 <p>{item.question}</p>
@@ -228,8 +242,8 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
               <div className="chat-answer">
                 <span>SEENC / {formatDate(item.created_at)}</span>
                 <p>{item.answer?.split("Sources")[0] || 'This answer is still being prepared.'}</p>
-                <div className='flex flex-row gap-1'>
-                  <details id="sources-dropdown" className=''>
+                <div className='flex flex-row max-w-full w-full'>
+                  <details id="sources-dropdown" className='sources-dropdown'>
                     <summary>Sources</summary>
                     <ul className="flex flex-col gap-2 p-4">
                       {parseSources(item.answer).map(source => (
@@ -367,10 +381,7 @@ function parseSources(answer?: string) {
   const sourceMarker = answer?.lastIndexOf('Sources:') ?? -1
   if (sourceMarker < 0) return []
 
-  return answer!.slice(sourceMarker + 'Sources:'.length)
-    .split(/(?=\[\d+\]\s)/)
-    .map(entry => entry.replace(/\s+/g, ' ').trim())
-    .map(entry => {
+  return answer!.slice(sourceMarker + 'Sources:'.length).split(/(?=\[\d+\]\s)/).map(entry => entry.replace(/\s+/g, ' ').trim()).map(entry => {
       const prefix = entry.match(/^\[(\d+)\]\s+(.+)$/)
       if (!prefix) return null
 

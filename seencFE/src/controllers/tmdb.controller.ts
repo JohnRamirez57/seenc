@@ -42,7 +42,7 @@ class TMDBController {
     public searchTrending = async(req: Request, res: Response) => {
         try {
             const trending = await this.tmdbService.searchTrending(req.query.time_window as string)
-            console.error("Trending: ", trending)
+            // console.error("Trending: ", trending)
             res.status(200).json(trending)
         } catch (error) {
             console.error(error);
@@ -54,7 +54,7 @@ class TMDBController {
 
     public searchQuery = async(req: Request, res: Response) => {
         try {
-            console.error(req.query)
+            // console.error(req.query)
             const query = typeof req.query.query === "string" ? req.query.query : "";
             const searchType: string = typeof req.query.searchType === "string" ? req.query.searchType : "";
             const searchService: searchFn = this.determineSearchFn(searchType);

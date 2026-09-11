@@ -1,3 +1,4 @@
+import { cacheKey, remember } from "./redis.service.ts";
 import axios, { type AxiosResponse } from 'axios';
 import type { detailsParams, EpisodeDetails, MovieCredit, RetrievedMovieCredits, searchParams } from '../interfaces/media.interfaces.ts';
 import { createSearchParamsObject } from '../utils/param.util.ts';
@@ -23,12 +24,16 @@ export class TMDBService {
     private readonly limiter: TokenBucket = new TokenBucket(this.STARTING_API_TOKENS, this.MAX_API_CALLS_PER_SECOND);
 
     public async makeTMDBRequest(formattedURL: string, params: any): Promise<AxiosResponse> {
-        await this.limiter.acquire();
-        const resp = await axios.get(formattedURL, {
-            params: params
-        })
-
-        return resp;
+        const { api_key: _apiKey, ...publicParams } = params || {};
+        const sortedParams = Object.fromEntries(Object.entries(publicParams).sort(([a], [b]) => a.localeCompare(b)));
+        const key = cacheKey('tmdb', [formattedURL, sortedParams]);
+        const ttl = /search|trending|popular/.test(formattedURL) ? 900 : 86400;
+        const data = await remember(key, ttl, async () => {
+            await this.limiter.acquire();
+            return (await axios.get(formattedURL, { params, timeout: 15_000 })).data;
+        });
+        // Callers use Axios' data/status shape; only the JSON payload is cached.
+        return { data, status: 200, statusText: 'OK', headers: {}, config: {} } as AxiosResponse;
     }
 
     public async searchTrending(window_time: string) {
@@ -41,7 +46,7 @@ export class TMDBService {
 
         trendingTVURLs.push(this.getTrendingURL.replace("{media_type}", "all").replace("{time_window}", window_time))
         
-        const res = (await Promise.allSettled(trendingTVURLs.map((url) => axios.get(url, { params: { api_key: process.env.TMDBKEY } }))))
+        const res = (await Promise.allSettled(trendingTVURLs.map((url) => this.makeTMDBRequest(url, { api_key: process.env.TMDBKEY }))))
         // console.error(res)
         return res.flatMap((promise, index) => {
                 if (promise.status !== "fulfilled") return [];
@@ -56,76 +61,52 @@ export class TMDBService {
 
     public async searchMedia(query: any, pageNumber: number = 1) {
         const cleanParams: searchParams = createSearchParamsObject(query, pageNumber);
-        return axios.get(this.searchMultiURL, { params: cleanParams })
+        return this.makeTMDBRequest(this.searchMultiURL, cleanParams)
     }
 
     public async searchTV(query: any, pageNumber: number = 1) {
         const cleanParams: searchParams = createSearchParamsObject(query, pageNumber)
-        return axios.get(this.searchTVURL, { params: cleanParams })
+        return this.makeTMDBRequest(this.searchTVURL, cleanParams)
     }
 
     public async searchMovies(query: any, pageNumber: number = 1) {
         const cleanParams: searchParams = createSearchParamsObject(query, pageNumber);
-        return axios.get(this.searchMovieURL, { params: cleanParams })
+        return this.makeTMDBRequest(this.searchMovieURL, cleanParams)
     }
 
     public async getMovieDetails(params: detailsParams){
         const {tmdb_id, ...info} = params;
-        return axios.get(`${this.getMovieDetailsURL}${tmdb_id}`, {params: info })
+        return this.makeTMDBRequest(`${this.getMovieDetailsURL}${tmdb_id}`, info)
     }
 
     public async getMovieCredits(movieId: number) {
-        const resp: AxiosResponse<RetrievedMovieCredits> = await axios.get(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        const resp: AxiosResponse<RetrievedMovieCredits> = await this.makeTMDBRequest(`${this.getMovieDetailsURL}${movieId}${this.getMovieCreditsURL}`, { api_key: process.env.TMDBKEY })
         resp.data.cast.forEach((entry: MovieCredit) => entry.profile_path = `${this.profilePathing}${this.profileSize}${entry.profile_path}`)
         return resp;
     }
 
     public async getTVDetails(tmdb_id: number) {
-        return axios.get(`${this.getTVDetailsURL}${tmdb_id}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        return this.makeTMDBRequest(`${this.getTVDetailsURL}${tmdb_id}`, { api_key: process.env.TMDBKEY })
     }
 
     public async getEpisodeCredits(tmdb_id: number, season_number: number, episode_number: number): Promise<AxiosResponse>{
         const url = this.getTVEpisodeDetailsURL.replace("{series_id}", String(tmdb_id)).replace("{season_number}", String(season_number)).replace("{episode_number}", String(episode_number)) + "/credits"
 
-        return axios.get(`${url}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        return this.makeTMDBRequest(`${url}`, { api_key: process.env.TMDBKEY })
     }
 
     public async getSeasonDetails(tmdb_id: number, season_number: number) {
         const url = this.getSeasonDetailsURL.replace("%d", String(tmdb_id)).replace("%d", String(season_number));
-        return axios.get(`${url}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        return this.makeTMDBRequest(`${url}`, { api_key: process.env.TMDBKEY })
     }
 
     public async getEpisodeDetails(tmdb_id: number, season_number: number, episode_number: number): Promise<AxiosResponse>{
         const url = this.getTVEpisodeDetailsURL.replace("{series_id}", String(tmdb_id)).replace("{season_number}", String(season_number)).replace("{episode_number}", String(episode_number))
-        return axios.get(`${url}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        return this.makeTMDBRequest(`${url}`, { api_key: process.env.TMDBKEY })
     }
 
     public async getTMDBByEpisodeID(episode_id: number, season_num: number, ) {
-        const episodeDetails = await axios.get(`${this.getTVDetailsURL}`, {
-            params: {
-                api_key: process.env.TMDBKEY
-            }
-        })
+        const episodeDetails = await this.makeTMDBRequest(`${this.getTVDetailsURL}`, { api_key: process.env.TMDBKEY })
     }
 
     public async getSeasonEpisodesDetails(tmdb_id: number, season_number: number, max_episodes: number, starting_number: number = 1) {

@@ -78,7 +78,7 @@ class UserController {
             const ep_num = Number(req.query.unit_number ?? -1);
             const season_num = Number(req.query.season_number ?? -1);
 
-            console.error(req.query)
+            // console.error(req.query)
             const userProg = await this.miscService.getUserProgress(user_id, tmdb_id, ep_num, season_num)
             res.status(200).json(userProg)
         } catch (error) {

@@ -1,3 +1,4 @@
+import { cacheKey, remember } from "./redis.service.ts";
 import axios from "axios";
 import { config } from "dotenv";
 import { dirname, resolve } from "node:path";
@@ -30,10 +31,6 @@ interface GeminiResponse {
     promptFeedback?: { blockReason?: string };
 }
 
-interface CachedResearch {
-    expiresAt: number;
-    sources: ResearchSource[];
-}
 
 export class AIServiceError extends Error {
     constructor(message: string, public readonly status: number) {
@@ -43,7 +40,7 @@ export class AIServiceError extends Error {
 
 export class AIService {
     private readonly prisma = new PrismaService();
-    private readonly researchCache = new Map<string, CachedResearch>();
+
 
     public askQuestion = async (userId: number, input: AskQuestionInput): Promise<AskQuestionResult> => {
         const media = await this.prisma.findMedia(input.tmdb_id);
@@ -170,9 +167,8 @@ export class AIService {
         const boundary = mediaType.toUpperCase() === "MOVIE" ? "complete movie plot recap and analysis"
         : `season ${seasonNumber} episode ${unitNumber} recap and analysis`;
         const questionFocus = question ? this.searchQuestion(question) : "";
-        const cacheKey = `${title}:${boundary}:${questionFocus}`.toLowerCase();
-        const cached = this.researchCache.get(cacheKey);
-        if (cached && cached.expiresAt > Date.now()) return cached.sources;
+        const key = cacheKey("research", [title, mediaType, seasonNumber, unitNumber, questionFocus]);
+        return remember<ResearchSource[]>(key, 6 * 60 * 60, async () => {
 
         try {
             const searchResponse = await axios.post<TavilySearchResponse>(
@@ -223,16 +219,14 @@ export class AIService {
                 throw new AIServiceError("The research sources could not be read.", 502);
             }
 
-            this.researchCache.set(cacheKey, {
-                sources,
-                expiresAt: Date.now() + 6 * 60 * 60 * 1000,
-            });
+
 
             return sources;
         } catch (error) {
             if (error instanceof AIServiceError) throw error;
             throw new AIServiceError("Tavily could not research this story point. Please try again.", 502);
         }
+        });
     };
 
     private createSpoilerSafeAnswer = async (

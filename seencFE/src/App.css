@@ -402,19 +402,36 @@ details summary {
   justify-content: space-between;
   align-items: center;
   list-style: none;
+  border-bottom: 2px solid grey;
+  transition: all 1s ease-in;
+}
+
+summary {
+  font-family: "Arial Narrow", Haettenschweiler, sans-serif;
+  font-weight: 100;
+}
+
+details summary:hover {
+    cursor: pointer;
 }
 
 details summary::-webkit-details-marker { display: none; }
 
-details summary::after {
-  content: "＋";
-  font-size: 1.2rem;
-  transition: transform 0.2s ease;
+details[open] summary::after {
+  content: "x";
 }
 
-details[open] summary::after {
-  transform: rotate(45deg);
-  content: "＋";
+.sources-dropdown[open] {
+    width: 100%;
+}
+
+.sources-dropdown {
+    transition: all 1s ease-in;
+    width: fit-content;
+}
+
+details[open] summary {
+    max-width: full;
 }
 
 details p {
@@ -422,6 +439,10 @@ details p {
   margin: 0;
   background-color: #ffffff;
   border-top: 1px solid #e5e7eb;
+}
+
+li {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .chat-ripple i:nth-child(2) { animation-delay: 1.8s; }
