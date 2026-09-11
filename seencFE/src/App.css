@@ -1,6 +1,21 @@
 @reference "tailwindcss";
 
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+}
+
 .header {
+  @apply flex min-h-[92px] items-center gap-[60px] border-b border-[#363933] bg-[#141616]/80 px-[4.5%] py-0;
+}
+
+.sticky-header {
   @apply sticky top-0 z-[100] flex min-h-[92px] items-center gap-[60px] border-b border-[#363933] bg-[#141616]/80 px-[4.5%] py-0;
 }
 
@@ -58,7 +73,10 @@
   @apply hidden;
 }
 main {
-  @apply mx-auto max-w-[1800px] px-[4.5%] py-0;
+  @apply mx-auto w-full max-w-[1800px] px-[4.5%] py-0;
+}
+main.chat-page {
+  @apply max-w-none p-0;
 }
 .page-heading {
   @apply relative px-0 pb-[29px] pt-[39px];
@@ -155,6 +173,10 @@ main {
   @apply mb-[22px] flex items-end justify-between;
 }
 
+.section-heading--left {
+  @apply items-start;
+}
+
 .section-heading h2 {
   @apply font-sans text-[23px] tracking-[-0.8px];
 }
@@ -178,9 +200,14 @@ main {
 .shelf-track {
   @apply flex gap-[22px] overflow-x-auto px-[5px] pb-[18px] pt-[6px];
   scroll-snap-type: x proximity;
-  margin: 0 -5px;
+  margin: 5 -5px;
   scrollbar-width: thin;
   scrollbar-color: #565e51 transparent;
+}
+
+.shelf-track--wrapped {
+  @apply flex-wrap overflow-visible;
+  scroll-snap-type: none;
 }
 
 .media-card {
@@ -322,11 +349,12 @@ main {
   color: #bdccd0;
 }
 .chat-compendium {
+  @apply box-border w-full min-w-0 max-w-none;
   --archive-blue: #65a9bf;
   --archive-dark: #111d21;
   position: relative;
-  min-height: 690px;
-  margin-bottom: 70px;
+  min-height: calc(100dvh - 92px);
+  margin-bottom: 0;
   padding: 34px;
   overflow: hidden;
   background: var(--archive-dark);
@@ -433,7 +461,7 @@ main {
 }
 .chat-layout {
   display: grid;
-  grid-template-columns: minmax(250px, 0.82fr) minmax(420px, 1.55fr);
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.55fr);
   gap: 32px;
   min-height: 480px;
 }
@@ -447,7 +475,7 @@ main {
   align-content: start;
   gap: 9px;
   max-height: 430px;
-  padding: 140px 12px;
+  padding: 35px 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-snap-type: y mandatory;
@@ -661,7 +689,7 @@ footer small {
   @apply ml-auto max-w-[300px] text-[9px] text-[#a8b39d];
 }
 dialog {
-  @apply max-h-[90dvh] w-[calc(100%-32px)] max-w-[780px] border border-[#6b7464] bg-[#1b201c] p-0 text-[#eeeade];
+  @apply fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-32px)] max-w-[780px] border border-[#6b7464] bg-[#1b201c] p-0 text-[#eeeade];
   animation: arrive 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 dialog::backdrop {
@@ -778,6 +806,9 @@ dialog::backdrop {
   .chat-slot-copy strong { font-size: 22px; }
 }
 @media (max-width: 600px) {
+  main.chat-page .chat-compendium {
+    min-height: calc(100dvh - 76px);
+  }
   .header {
     min-height: 76px;
     padding: 0 5%;

@@ -62,7 +62,6 @@ export function Details({
     }
 
     try {
-      // The backend needs the movie or episode prepared before saving progress.
       await api.post(`/data/add/media/${isSeries ? 'tv' : 'movie'}-unit`, {
         tmdb_id: media.tmdb_id,
         ...(isSeries ? { season_number: season } : {}),

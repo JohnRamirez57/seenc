@@ -101,7 +101,7 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
   }
 
   return (
-    <section className="chat-compendium" aria-labelledby="chat-compendium-title">
+    <section className="chat-compendium w-full" aria-labelledby="chat-compendium-title">
       <div className="chat-ripple" aria-hidden="true"><i /><i /><i /></div>
 
       <header className="chat-intro">

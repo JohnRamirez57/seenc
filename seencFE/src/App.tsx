@@ -26,7 +26,7 @@ declare global {
 const pageTitles: Record<ScenePage, string> = {
   discover: 'Join the bandwagon.', // discover should display trending media, prob need to update tmdb service
   library: 'View your commitments.',
-  chats: 'Revisit your questions.',
+  chats: 'Revisit your inquiries.',
   search: 'What\'s on your mind?',
 }
 
@@ -83,8 +83,8 @@ function App() {
       <a className="skip" href="#main">Skip to content</a>
       <Header page={page} onSignIn={openSignIn} onSignOut={finishSignOut} onNotice={setNotice} />
 
-      <main id="main" tabIndex={-1}>
-        <div className="page-heading flex flex-col">
+      <main id="main" className={page === 'chats' ? 'chat-page' : undefined} tabIndex={-1}>
+        <div className="page-heading flex flex-col" hidden={page === 'chats'}>
           <p className="eyebrow justify-items-start">NEVER SPOIL YOURSELF AGAIN</p>
           <h1 tabIndex={-1} ref={heading}>{pageTitles[page]}</h1>
           <a href="#search" className="absolute right-0 bottom-8">Find a title ↗</a>

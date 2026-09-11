@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { getTrending } from '../../client/api'
 import type { Media } from '../../client/api'
 import { Artwork, Shelf } from '../components/Shelf'
+import { shuffle } from "../utils/format.util.ts"
 
 interface DiscoverPageProps {
   active: boolean
@@ -52,10 +53,11 @@ export function DiscoverPage({
   }
 
   const filteredCatalog = filterMedia(catalog)
-  const newItems = filteredCatalog
-    .toSorted((a, b) => (b.release_date || '').localeCompare(a.release_date || ''))
-    .slice(0, 10)
-  const exploreItems = filteredCatalog.slice(10)
+  const sortedCatalog = filteredCatalog.toSorted((a, b) =>
+    (b.release_date || '').localeCompare(a.release_date || ''),
+  )
+  const newItems = sortedCatalog.slice(0, 10)
+  const exploreItems = sortedCatalog.slice(10)
 
   const hero = catalog.find(media => media.backdrop_url) || catalog[0]
   const watchingLabels: Record<number, string> = {}
@@ -111,7 +113,48 @@ export function DiscoverPage({
         <Shelf title="Continue watching" subtitle="BACK TO YOUR WORLD"
           items={filterMedia(continuing)} open={onOpenMedia} status={watchingLabels} />
       )}
-      {catalog.length > 0 && (
+      {(catalog.length > 0 && filter === "ALL") && (
+        <div className='flex w-full min-w-0 flex-col overflow-hidden' aria-label='all-shelf-div'>
+          <div className='w-full h-fit max-w-full'>
+            <div className="section-heading section-heading--left flex flex-col-reverse text-left">
+              <p className="eyebrow">Witness what people are going crazy for!</p>
+              <h2>Anything catch your eye?</h2>
+            </div>
+            <div className="shelf-track shelf-track--wrapped flex justify-between items-center">
+              {shuffle([...newItems, ...exploreItems]).map((media, index) => {
+                let mediaType = 'Saved title'
+                if (media.media_type === 'TV') mediaType = 'Series'
+                if (media.media_type === 'MOVIE') mediaType = 'Film'
+                const releaseYear = media.release_date?.slice(0, 4)
+                const metadata = window.status?.[media.tmdb_id]
+                  || [mediaType, releaseYear].filter(Boolean).join(' / ')
+
+                return (
+                  <button
+                    className="media-card"
+                    key={`${media.media_type}:${media.tmdb_id}`}
+                    onClick={() => onOpenMedia(media)}
+                  >
+                    <div className="poster">
+                      <Artwork media={media} />
+                      <span className="card-index">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="card-open">↗</span>
+                    </div>
+                    <span className="card-title">{media.title}</span>
+                    <span className="card-meta">{metadata}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {(catalog.length > 0 && filter !== "ALL") && (
+            <Shelf title='Seem familiar?' subtitle='Scour any media you know!' items={shuffle([...newItems, ...exploreItems])} open={onOpenMedia}/>
+          ) }
+        </div>
+      )}
+      {(catalog.length > 0 && filter !== "ALL") && (
         <div className='flex w-full min-w-0 flex-col overflow-hidden' aria-label='discover-shelf-div'>
           <div className={filter === 'TV' ? 'w-full min-w-0 translate-y-full transition-transform duration-500 ease-in-out' : 'w-full min-w-0 transition-transform duration-500 ease-in-out'} aria-label='new-shelf'>
           <Shelf title="What's new" subtitle="SEE WHAT'S TRENDING"

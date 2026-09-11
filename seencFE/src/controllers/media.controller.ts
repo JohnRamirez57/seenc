@@ -89,7 +89,7 @@ class MediaController {
 
             const mediaParams = {
                 ...desiredMedia,
-                release_date: new Date(desiredMedia.release_date),
+                ...(desiredMedia.release_date ? { release_date: new Date(desiredMedia.release_date) } : {}),
                 created_at: desiredMedia.created_at ? new Date(desiredMedia.created_at) : new Date(),
                 updated_at: desiredMedia.updated_at ? new Date(desiredMedia.updated_at) : new Date(),
             };

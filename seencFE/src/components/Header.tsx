@@ -21,7 +21,6 @@ export function Header({ page, onSignIn, onSignOut, onNotice }: HeaderProps) {
   const [signingOut, setSigningOut] = useState(false)
 
   useEffect(() => {
-    // An expired cookie should also clear the signed-in navigation.
     const interceptor = api.interceptors.response.use(
       response => response,
       error => {
@@ -75,7 +74,7 @@ export function Header({ page, onSignIn, onSignOut, onNotice }: HeaderProps) {
   }
 
   return (
-    <header className="header">
+    <header className={page === 'chats' ? "header" : "sticky-header"}>
       <a className="brand" href="#discover" aria-label="Seenc home">
         seenc<span> /</span>
       </a>
@@ -98,7 +97,6 @@ export function Header({ page, onSignIn, onSignOut, onNotice }: HeaderProps) {
   )
 }
 
-// A missing session is normal for a visitor, rather than a service failure.
 function apiErrorIsSignedOut(error: unknown) {
   return isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)
 }

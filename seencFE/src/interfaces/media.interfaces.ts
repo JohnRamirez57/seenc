@@ -293,7 +293,7 @@ export interface newMediaParams {
     poster_url: string;
     isbn?: string;
     tmdb_id: number;
-    release_date: Date;
+    release_date?: Date;
     created_at: Date;
     updated_at: Date;
 }

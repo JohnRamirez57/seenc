@@ -22,32 +22,32 @@ interface SceneMenuProps {
 
 const destinations: Destination[] = [
   {
-    id: 'discover',
+    id: 'search',
     number: '01',
+    label: 'Search',
+    line: 'Let your curiosity lead, not kill you.',
+    detail: 'Find the film or series you can’t stop thinking about.',
+  },
+  {
+    id: 'discover',
+    number: '02',
     label: 'Discover',
     line: 'Find your next obsession.',
-    detail: 'A new world. A different perspective. Follow whatever catches your eye.',
+    detail: 'Hopefully not like the movie.',
   },
   {
     id: 'library',
-    number: '02',
+    number: '03',
     label: 'My library',
-    line: 'Every story has a place.',
-    detail: 'Your collection, your progress, and the stories waiting for your return.',
+    line: 'Every story has a fan.',
+    detail: 'Your collection, your progress, your questionable inquires unjudged (probably).',
   },
   {
     id: 'chats',
-    number: '03',
+    number: '04',
     label: 'My Chats',
     line: 'Every question has a place.',
-    detail: 'Return to the conversations connected to the stories in your library.',
-  },
-  {
-    id: 'search',
-    number: '04',
-    label: 'Search',
-    line: 'Let curiosity lead.',
-    detail: 'Find the film or series you can’t stop thinking about.',
+    detail: 'Return to the convos linked to the stories in your library.',
   },
 ]
 
