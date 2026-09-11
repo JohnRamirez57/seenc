@@ -16,7 +16,7 @@ The project is in active development. The main movie and television workflow is 
 - Loading, empty, and error states for the main browsing flows
 - A responsive interface with keyboard support and reduced-motion handling
 
-The visual direction combines cinematic browsing with an original menu-driven style influenced by the energy and motion of Persona 3 Reload and Persona 5. The interface uses strong type, angled composition, deliberate transitions, and a restrained blue and neutral palette without copying game artwork or exact menus.
+The visual direction combines cinematic browsing with an original menu-driven style influenced by the energy and motion of Persona 3 Reload and Persona 5 (Royal). The interface uses strong type, angled composition, deliberate transitions, and a mild blue and neutral palette without copying game artwork or exact menus.
 
 ### Accounts and personal libraries
 
