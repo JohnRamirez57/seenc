@@ -366,7 +366,8 @@ export class AIService {
     }
 
     private addSourceList(answer: string, sources: ResearchSource[]) {
-        const sourceList = sources.map((source, index) => `[${index + 1}] ${source.title} -> ${source.url}`).join("\n");
+        const sourceList = sources.map((source, index) => `[${index + 1}] ${source.title} |
+        ${source.url}`).join("\n");
         return `${answer}\n\nSources:\n${sourceList}`;
     }
 }

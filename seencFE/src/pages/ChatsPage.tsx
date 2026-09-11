@@ -218,30 +218,45 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
       <AskPanel media={slot.media} onCreated={onCreated} />
 
       <div className="chat-history">
-        {slot.messages.length ? slot.messages.map(item => (
-          <section className="chat-exchange" key={item.id}>
-            <div className="chat-question">
-              <span>YOU / {formatUnit(item)}</span>
-              <p>{item.question}</p>
-            </div>
-            <div className="chat-answer">
-              <span>SEENC / {formatDate(item.created_at)}</span>
-              <p>{item.answer?.split("Sources")[0] || 'This answer is still being prepared.'}</p>
-              <div className='flex flex-row gap-1'>
-                <details id="sources-dropdown" className=''>
-                  <summary>Sources</summary>
-                  <p>{item.answer?.split("\nSources:\n")[1]}</p>
-                </details>
+        <div className="flex flex-col-reverse">
+          {slot.messages.length ? slot.messages.map(item => (
+            <section className="chat-exchange" key={item.id}>
+              <div className="chat-question">
+                <span>YOU / {formatUnit(item)}</span>
+                <p>{item.question}</p>
               </div>
+              <div className="chat-answer">
+                <span>SEENC / {formatDate(item.created_at)}</span>
+                <p>{item.answer?.split("Sources")[0] || 'This answer is still being prepared.'}</p>
+                <div className='flex flex-row gap-1'>
+                  <details id="sources-dropdown" className=''>
+                    <summary>Sources</summary>
+                    <ul className="flex flex-col gap-2 p-4">
+                      {parseSources(item.answer).map(source => (
+                        <li key={source.url}>
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="underline decoration-[#65a9bf] underline-offset-2"
+                          >
+                            [{source.index}] {source.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              </div>
+            </section>
+          )) : (
+            <div className="chat-history-empty">
+              <span aria-hidden="true">04</span>
+              <h3>No questions here yet.</h3>
+              <p>This saved story has yet to hear your inquiries. Its first conversation will appear here.</p>
             </div>
-          </section>
-        )) : (
-          <div className="chat-history-empty">
-            <span aria-hidden="true">04</span>
-            <h3>No questions here yet.</h3>
-            <p>This saved story has yet to hear your inquiries. Its first conversation will appear here.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </article>
   )
@@ -346,6 +361,28 @@ function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return 'Date unavailable'
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+}
+
+function parseSources(answer?: string) {
+  const sourceMarker = answer?.lastIndexOf('Sources:') ?? -1
+  if (sourceMarker < 0) return []
+
+  return answer!.slice(sourceMarker + 'Sources:'.length)
+    .split(/(?=\[\d+\]\s)/)
+    .map(entry => entry.replace(/\s+/g, ' ').trim())
+    .map(entry => {
+      const prefix = entry.match(/^\[(\d+)\]\s+(.+)$/)
+      if (!prefix) return null
+
+      const urlMatch = prefix[2].match(/https?:\/\/[^\s"'<>]+/)
+      if (!urlMatch) return null
+
+      return {
+        index: prefix[1],
+        title: prefix[2].slice(0, urlMatch.index).replace(/<[^>]*>/g, '').replace(/\s*(?:\||->|—)\s*$/, '').trim(),
+        url: urlMatch[0],
+      }
+    }).filter((source): source is { index: string; title: string; url: string } => source !== null)
 }
 
 function reducedMotion(): ScrollBehavior {
