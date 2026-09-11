@@ -1,68 +1,160 @@
 # Seenc
 
-Seenc is a full-stack media tracking platform designed to help users keep track of what they watch and eventually ask spoiler-aware questions about the stories they are following.
+Seenc is a media tracker and spoiler-aware story companion for movies and television. It gives users one place to discover titles, maintain a personal library, record watch progress, and ask questions about a story without receiving information from beyond their current point.
 
-The project is currently in active development, with most of my focus on completing the backend architecture and data pipeline before building out the final frontend experience.
+The long-term goal is to make following a story feel continuous. A user should be able to stop after an episode, return later, and ask why something happened based only on what they have already watched. Seenc combines media metadata, saved progress, web research, and AI-generated answers to support that experience.
 
-## Current Progress
+The project is in active development. The main movie and television workflow is functional. Book support and deeper structured story knowledge are represented in the database but are not complete user features yet.
 
-### Backend: Mostly Complete
+## Current Features
 
-The backend is built with **TypeScript, Node.js, Express, PostgreSQL, and Prisma** and currently supports:
+### Media browsing
 
-- User account creation, login, logout, and session restoration
-- JWT authentication using HTTP-only cookies
-- Protected user routes and personalized media libraries
-- TMDB-powered movie and TV search
-- Movie, season, episode, cast, and character metadata retrieval
-- PostgreSQL storage for users, media, seasons, episodes, characters, and user-media relationships
-- Automatic creation and reuse of existing media/character records
-- Episode-level character appearance processing
-- Input validation and modular route/controller/service organization
+- A Discover page with a featured title, trending movies and series, filters, and media shelves
+- Search across movies and television through The Movie Database API
+- Media detail views with artwork, descriptions, release information, cast data, and library controls
+- Loading, empty, and error states for the main browsing flows
+- A responsive interface with keyboard support and reduced-motion handling
 
-I am currently finishing the remaining backend relationships and logic for areas such as user progress, character appearances, events, knowledge records, and questions.
+The visual direction combines cinematic browsing with an original menu-driven style influenced by the energy and motion of Persona 3 Reload and Persona 5. The interface uses strong type, angled composition, deliberate transitions, and a restrained blue and neutral palette without copying game artwork or exact menus.
 
-### Frontend: In Progress
+### Accounts and personal libraries
 
-The frontend uses **React, TypeScript, Redux Toolkit, Tailwind CSS, and Vite**.
+- Account creation, login, logout, and session restoration
+- Password hashing with bcrypt
+- JWT authentication stored in an HTTP-only cookie
+- Protected library, progress, and chat routes
+- Add and remove movies or series from a personal library
+- Watch states for watching, completed, paused, dropped, and planned titles
+- Episode-level progress for television and full-film completion for movies
+- Continue Watching sections on the Discover and Library pages
 
-Current frontend work is focused on authentication state and connecting the UI to the backend. The larger interface will be developed once the core backend behavior is stable.
+### Spoiler-aware questions
 
-The current interface also includes a **My Chats** archive. Signed-in users can browse question-and-answer history for titles that remain in their library, search by title, filter by media type or existing history, and use arrow keys to move through the chat list.
+Signed-in users can ask questions from the My Chats section. Before an answer is generated, Seenc checks that the title is in the user's library and that the requested movie or episode is within the user's saved progress.
 
-## Project Vision
+The question flow currently uses:
 
-The final goal is for Seenc to support **TV shows, movies, and books** through a personalized media library with detailed progress tracking.
+1. Tavily to find and extract sources related to the title and story boundary.
+2. Gemini to answer from those sources while following the saved spoiler boundary.
+3. PostgreSQL to save the question, answer, source list, user, and related media unit.
 
-A major planned feature is an AI-powered question system that understands how far a user has progressed through a story.
+If broad research does not support an answer, Seenc performs a second search focused on the user's question. Completed movies allow facts from the full film. Television answers are limited to the selected season and episode. Provider safety blocks are handled separately from spoiler boundaries.
 
-For example, a user could ask:
+The My Chats interface groups saved questions by title. Users can search the archive, filter it by movie, series, or existing history, move through chat slots with the keyboard, and reopen the source links attached to an answer.
 
-> "Why did this character do that?"
+### Redis caching
 
-Seenc would use the user's current episode or chapter to answer using only information they should already know, while warning them when an answer has not yet been revealed.
+Redis reduces repeated requests to external services and continues to fail safely when the cache is unavailable.
 
-Planned features include:
+- Tavily research sources are cached for 6 hours.
+- TMDB search, trending, and popular results are cached for 15 minutes.
+- TMDB details, seasons, episodes, and credits are cached for 24 hours.
+- Concurrent requests in one backend process share the same provider request.
+- Cache keys are hashed and do not contain API credentials.
 
-- Episode and chapter-level progress tracking
-- Spoiler-aware AI question answering
-- Story knowledge organized by characters, events, relationships, locations, mysteries, and objects
-- Context retrieval from PostgreSQL
-- Redis caching for repeated lookups and AI-assisted search correction
-- Support for movies, TV shows, and books
-- A polished responsive media library and progress dashboard
+User accounts, library membership, watch progress, and generated chat answers are not cached. These records continue to use PostgreSQL so authorization and progress checks use current data.
 
-## Tech Stack
+## Project Structure
 
-**Frontend:** React, TypeScript, Redux Toolkit, Tailwind CSS, Vite  
-**Backend:** Node.js, Express, TypeScript  
-**Database:** PostgreSQL, Prisma  
-**APIs:** TMDB, future AI integration  
-**Other:** Redis, JWT, bcrypt, Axios, Joi
+```text
+seencBE/
+  backend.ts                 Express server entry point
+  backendMiddleware/         JWT authentication middleware
+  backendUtils/              Cookie and token helpers
 
-## Status
+seencFE/
+  client/                    Browser API client and shared response types
+  prisma/                    PostgreSQL schema
+  public/                    Static assets
+  src/components/            Shared interface components
+  src/pages/                 Discover, Search, Library, and My Chats pages
+  src/routes/                Express route definitions
+  src/controllers/           Request handling
+  src/services/              Prisma, TMDB, AI, account, media, and Redis logic
+  src/toolkit/               Redux store and slices
+  docker-compose.yml         Local Redis service
+```
 
-**In Development**
-(expected to be finished before October)
+The Express entry point is in `seencBE`, while most routes, controllers, and services currently live under `seencFE/src`. This reflects the project's current development structure and may be separated more clearly as the codebase matures.
 
-The backend is nearing completion. Current development is focused on finishing the remaining database-backed features before shifting more heavily toward the frontend and AI retrieval system.
+## Technology
+
+- Frontend: React, TypeScript, Redux Toolkit, Tailwind CSS, and Vite
+- Backend: Node.js, Express, TypeScript, Axios, and Joi
+- Database: PostgreSQL with Prisma
+- Authentication: JWT, HTTP-only cookies, and bcrypt
+- Media data: TMDB
+- Research and answers: Tavily and Gemini
+- Cache: Redis with Docker Compose for local development
+
+## Local Setup
+
+Seenc currently expects Node.js, PostgreSQL, Docker, and API credentials for TMDB, Tavily, and Gemini.
+
+Create a `.env` file at the repository root:
+
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/seenc?schema=public
+TMDBKEY=your_tmdb_key
+LOCAL_HOST=http://localhost:5173
+EXPIRES_IN_TIME=1h
+JWT_SECRET_KEY=your_random_secret
+NODE_ENV=development
+
+TAVILY_API_KEY=your_tavily_key
+GEMINI_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-3.5-flash-lite
+
+REDIS_URL=redis://127.0.0.1:6379
+REDIS_ENABLED=true
+```
+
+Install dependencies in both application folders:
+
+```powershell
+cd seencFE
+npm install
+
+cd ../seencBE
+npm install
+```
+
+Start Redis from the repository root:
+
+```powershell
+docker compose -f seencFE/docker-compose.yml up -d
+```
+
+Start the backend:
+
+```powershell
+cd seencBE
+npm start
+```
+
+Start the frontend in another terminal:
+
+```powershell
+cd seencFE
+npm run dev
+```
+
+Vite serves the frontend at `http://localhost:5173` and proxies `/api` requests to the Express server at `http://localhost:3000`.
+
+## Current Development Status
+
+The core movie and television experience is connected from the interface through the database and external services. Current work is centered on making progress tracking and spoiler boundaries more reliable, improving research quality, and refining the chat experience.
+
+The database already includes models for characters, appearances, events, knowledge entries, questions, seasons, and media units, along with media types and fields intended for books. Routes also exist for reading and creating event and knowledge records. These pieces provide the foundation for a richer story model, but the full ingestion process and user-facing experience for them are still in development.
+
+Planned work includes:
+
+- More reliable episode and season progress controls
+- Better source ranking and verification for specific scene questions
+- Structured context from characters, events, relationships, locations, mysteries, and objects
+- A complete book metadata and chapter progress workflow
+- Further accessibility and mobile interface refinement
+- Clearer separation between frontend and backend code
+
+Seenc is not deployed as a finished product yet. It is a working full-stack project whose central library, progress, research, chat, and caching systems are now in place.
