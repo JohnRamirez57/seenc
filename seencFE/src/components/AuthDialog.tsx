@@ -55,7 +55,7 @@ export function AuthDialog({ onClose, onNotice }: AuthDialogProps) {
 
   return (
     <Dialog title={creatingAccount ? 'Create account' : 'Sign in'} close={onClose}>
-      <p className="eyebrow">YOUR STORY STARTS HERE</p>
+      <p className="eyebrow">YOUR CURIOSITY IS WELCOME HERE</p>
       <h2>{creatingAccount ? 'Make it yours.' : 'Welcome back.'}</h2>
 
       <form className="auth-form" onSubmit={handleSubmit}>

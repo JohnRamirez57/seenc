@@ -15,10 +15,7 @@ class AIController {
             const input: AskQuestionInput = {
                 tmdb_id: Number(req.body.tmdb_id),
                 unit_number: Number(req.body.unit_number),
-                question: req.body.question,
-                ...(req.body.season_number === undefined
-                    ? {}
-                    : { season_number: Number(req.body.season_number) }),
+                question: req.body.question, ...(req.body.season_number === undefined ? {} : { season_number: Number(req.body.season_number) }),
             };
             const result = await this.aiService.askQuestion(userId, input);
             return res.status(201).json(result);

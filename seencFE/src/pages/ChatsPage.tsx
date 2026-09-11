@@ -101,9 +101,9 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
   if (!signedIn) {
     return (
       <section className="chats-welcome">
-        <p className="eyebrow">PERSONAL ARCHIVE / LOCKED</p>
-        <h2>Your questions are<br />waiting for you.</h2>
-        <p>Sign in to revisit chats connected to the stories in your library.</p>
+        <p className="eyebrow">PERSONAL ARCHIVE</p>
+        <h2>Your questions are<br /> are locked away.</h2>
+        <p>Sign in to revisit chats linked to the stories in your library.</p>
         <button className="primary" onClick={onSignIn}>Sign in ↗</button>
       </section>
     )
@@ -172,7 +172,6 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
           </div>
           <span className="slot-marker slot-marker-bottom" aria-hidden="true">▼</span>
         </div>
-
         <ChatRecord slot={selectedSlot} onCreated={() => setReloadCount(count => count + 1)} />
       </div>
     </section>
@@ -199,10 +198,10 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
     return <div className="chat-record chat-record-empty">Select a saved story to open its record.</div>
   }
 
-  const artwork: Media = {
-    ...slot.media,
-    poster_url: slot.media.poster_url || imageUrl(slot.messages[0]?.media_unit.media.poster_url),
+  const artwork: Media = { ...slot.media, poster_url: slot.media.poster_url || imageUrl(slot.messages[0]?.media_unit.media.poster_url),
   }
+
+  // console.log(slot.messages)
 
   return (
     <article className="chat-record" aria-live="polite">
@@ -213,7 +212,7 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
           <h3>{slot.media.title}</h3>
           <p>{slot.messages.length} {slot.messages.length === 1 ? 'exchange' : 'exchanges'} archived</p>
         </div>
-        <span className="record-stamp" aria-hidden="true">SEENC<br />04</span>
+        {/* <span className="record-stamp" aria-hidden="true">SEENC<br />04</span> */}
       </header>
 
       <AskPanel media={slot.media} onCreated={onCreated} />
@@ -227,14 +226,20 @@ function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => voi
             </div>
             <div className="chat-answer">
               <span>SEENC / {formatDate(item.created_at)}</span>
-              <p>{item.answer || 'This answer is still being prepared.'}</p>
+              <p>{item.answer?.split("Sources")[0] || 'This answer is still being prepared.'}</p>
+              <div className='flex flex-row gap-1'>
+                <details id="sources-dropdown" className=''>
+                  <summary>Sources</summary>
+                  <p>{item.answer?.split("\nSources:\n")[1]}</p>
+                </details>
+              </div>
             </div>
           </section>
         )) : (
           <div className="chat-history-empty">
             <span aria-hidden="true">04</span>
             <h3>No questions here yet.</h3>
-            <p>This saved story has a place in your archive. Its first conversation will appear here.</p>
+            <p>This saved story has yet to hear your inquiries. Its first conversation will appear here.</p>
           </div>
         )}
       </div>
