@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { KeyboardEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { api, imageUrl, message } from '../../client/api'
-import type { ChatMessage, Media } from '../../client/api'
+import type { AskQuestionResponse, ChatMessage, Media } from '../../client/api'
 import { Artwork } from '../components/Shelf'
 
 type ChatFilter = 'ALL' | 'MOVIE' | 'TV' | 'ACTIVE'
@@ -25,6 +25,7 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
   const [filter, setFilter] = useState<ChatFilter>('ALL')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [reloadCount, setReloadCount] = useState(0)
 
   useEffect(() => {
     if (!active || !signedIn) return
@@ -48,13 +49,21 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
 
     void loadChats()
     return () => controller.abort()
-  }, [active, signedIn])
+  }, [active, signedIn, reloadCount])
 
   const chatSlots = useMemo(() => {
-    return library.map(media => ({
-      media,
-      messages: messages.filter(item => item.media_unit.media.tmdb_id === media.tmdb_id),
-    }))
+    return library.map(media => {
+      const mediaMessages = messages.filter(item => item.media_unit.media.tmdb_id === media.tmdb_id)
+      const storedMedia = mediaMessages[0]?.media_unit.media
+      return {
+        media: media.media_type || !storedMedia ? media : {
+          ...media,
+          media_type: storedMedia.media_type,
+          poster_url: media.poster_url || imageUrl(storedMedia.poster_url),
+        },
+        messages: mediaMessages,
+      }
+    })
   }, [library, messages])
 
   const visibleSlots = chatSlots.filter(slot => {
@@ -101,7 +110,7 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
   }
 
   return (
-    <section className="chat-compendium w-full" aria-labelledby="chat-compendium-title">
+    <section className="chat-compendium" aria-labelledby="chat-compendium-title">
       <div className="chat-ripple" aria-hidden="true"><i /><i /><i /></div>
 
       <header className="chat-intro">
@@ -164,7 +173,7 @@ export function ChatsPage({ active, signedIn, library, onSignIn }: ChatsPageProp
           <span className="slot-marker slot-marker-bottom" aria-hidden="true">▼</span>
         </div>
 
-        <ChatRecord slot={selectedSlot} />
+        <ChatRecord slot={selectedSlot} onCreated={() => setReloadCount(count => count + 1)} />
       </div>
     </section>
   )
@@ -185,7 +194,7 @@ function FilterButton({ label, value, current, onSelect }: FilterButtonProps) {
   )
 }
 
-function ChatRecord({ slot }: { slot?: ChatSlot }) {
+function ChatRecord({ slot, onCreated }: { slot?: ChatSlot; onCreated: () => void }) {
   if (!slot) {
     return <div className="chat-record chat-record-empty">Select a saved story to open its record.</div>
   }
@@ -206,6 +215,8 @@ function ChatRecord({ slot }: { slot?: ChatSlot }) {
         </div>
         <span className="record-stamp" aria-hidden="true">SEENC<br />04</span>
       </header>
+
+      <AskPanel media={slot.media} onCreated={onCreated} />
 
       <div className="chat-history">
         {slot.messages.length ? slot.messages.map(item => (
@@ -228,6 +239,88 @@ function ChatRecord({ slot }: { slot?: ChatSlot }) {
         )}
       </div>
     </article>
+  )
+}
+
+function AskPanel({ media, onCreated }: { media: Media; onCreated: () => void }) {
+  const isSeries = media.media_type === 'TV'
+  const [season, setSeason] = useState(1)
+  const [episode, setEpisode] = useState(1)
+  const [question, setQuestion] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
+
+  async function submitQuestion(event: FormEvent) {
+    event.preventDefault()
+    if (!question.trim()) return
+    setBusy(true)
+    setStatus('Researching this story point…')
+
+    const boundary = {
+      tmdb_id: media.tmdb_id,
+      unit_number: isSeries ? episode : -1,
+      ...(isSeries ? { season_number: season } : {}),
+    }
+
+    try {
+      await api.post(`/data/add/media/${isSeries ? 'tv' : 'movie'}-unit`, {
+        tmdb_id: media.tmdb_id,
+        ...(isSeries ? { season_number: season } : {}),
+      })
+      await api.post<AskQuestionResponse>('/ai/question/ask', {
+        ...boundary,
+        question: question.trim(),
+      }, { timeout: 90_000 })
+      setQuestion('')
+      setStatus('Answer saved to this record.')
+      onCreated()
+    } catch (error) {
+      setStatus(message(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="chat-ask" onSubmit={submitQuestion}>
+      <div className="chat-ask-heading">
+        <div>
+          <span className="eyebrow">ASK WITHIN YOUR PROGRESS</span>
+          <h4>Set the spoiler boundary.</h4>
+        </div>
+        {isSeries ? (
+          <div className="chat-boundary">
+            <label>
+              Season
+              <input type="number" min="1" max="999" value={season}
+                onChange={event => setSeason(Number(event.target.value))} />
+            </label>
+            <label>
+              Episode
+              <input type="number" min="1" max="9999" value={episode}
+                onChange={event => setEpisode(Number(event.target.value))} />
+            </label>
+          </div>
+        ) : <strong className="film-boundary">FULL FILM</strong>}
+      </div>
+      <label className="chat-question-input">
+        Your question
+        <textarea
+          required
+          minLength={3}
+          maxLength={500}
+          value={question}
+          onChange={event => setQuestion(event.target.value)}
+          placeholder="Why did that character make that choice?"
+        />
+      </label>
+      <div className="chat-ask-actions">
+        <button className="secondary" disabled={busy}>
+          {busy ? 'Researching…' : 'Ask Seenc ↗'}
+        </button>
+        <p role="status">{status}</p>
+      </div>
+    </form>
   )
 }
 

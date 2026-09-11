@@ -44,10 +44,17 @@ const destinations: Destination[] = [
   },
   {
     id: 'chats',
-    number: '04',
+    number: '03',
     label: 'My Chats',
     line: 'Every question has a place.',
-    detail: 'Return to the convos linked to the stories in your library.',
+    detail: 'Return to the conversations connected to the stories in your library.',
+  },
+  {
+    id: 'search',
+    number: '04',
+    label: 'Search',
+    line: 'Let curiosity lead.',
+    detail: 'Find the film or series you can’t stop thinking about.',
   },
 ]
 

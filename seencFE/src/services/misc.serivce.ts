@@ -36,7 +36,8 @@ export class MiscService {
         // console.error("Media: ", media)
         if (!media) throw new Error("Media doesn\'t exist")
         const isMovie: boolean = ep_num === -1;
-        const currUnit = await this.prisma.findMediaUnit(tmdb_id, ep_num, isMovie, season_num);
+        const seasonId = await this.resolveSeasonId(media.id, season_num, isMovie);
+        const currUnit = await this.prisma.findMediaUnit(tmdb_id, ep_num, isMovie, seasonId);
         
         const foundUserProg = await this.prisma.findUserProgress(user_id, media.id, currUnit?.id)
         if (!foundUserProg) return null;
@@ -51,8 +52,13 @@ export class MiscService {
             if (!media) return new Error("Media not found")
             // movies have NULL as unit_number, so -1 indicates NULL
             const isMovie = unit_number === -1;
-            const unit = await this.prisma.findMediaUnit(tmdb_id, unit_number, isMovie, season_num);
+            const seasonId = await this.resolveSeasonId(media.id, season_num, isMovie);
+            const unit = await this.prisma.findMediaUnit(tmdb_id, unit_number, isMovie, seasonId);
             if (!unit) return new Error("Media unit not found")
+            const existingProgress = await this.prisma.findUserProgress(user_id, media.id);
+            if (existingProgress) {
+                return this.prisma.updateUserProgressUnit(existingProgress.id, unit.id);
+            }
             const progressData = {
                 user_id,
                 media_id: media.id,
@@ -70,6 +76,12 @@ export class MiscService {
         }
     }
 
+    private resolveSeasonId = async (mediaId: number, seasonNumber: number | undefined, isMovie: boolean) => {
+        if (isMovie || seasonNumber === undefined || seasonNumber < 1) return undefined;
+        const season = await this.prisma.findTVSeason(mediaId, seasonNumber);
+        return season?.id;
+    }
+
     public async createCharacterAppearancesFromTV(
         tmdb: number,
         season: number
@@ -83,7 +95,10 @@ export class MiscService {
 
         const max_episodes = seasonDetails.episodes.length;
 
-        const mediaUnitPromises = [];
+        const mediaUnitPromises: Array<Promise<{
+            epNum: number;
+            mediaUnit: Awaited<ReturnType<PrismaService["findMediaUnit"]>>;
+        }>> = [];
 
         for (let epNum = 1; epNum <= max_episodes; epNum++) {
             mediaUnitPromises.push(

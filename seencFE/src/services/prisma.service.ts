@@ -133,6 +133,16 @@ export class PrismaService {
         })
     }
 
+    public updateUserProgressUnit = async (progress_id: number, current_unit_id: number) => {
+        return this.prismaClient.user_progress.update({
+            where: { id: progress_id },
+            data: {
+                current_unit_id,
+                last_viewed: new Date()
+            }
+        })
+    }
+
     public createUser = async (email: string, username: string, password: string) => {
         const passwordHash = await bcrypt.hash(password, saltRounds)
         return this.prismaClient.users.create({
@@ -173,6 +183,17 @@ export class PrismaService {
             where: {
                 user_id: user_id,
                 media_id: media_id
+            }
+        })
+    }
+
+    public findUserProgressWithUnit = async (user_id: number, media_id: number) => {
+        return this.prismaClient.user_progress.findFirst({
+            where: { user_id, media_id },
+            include: {
+                media_unit: {
+                    include: { seasons: true }
+                }
             }
         })
     }

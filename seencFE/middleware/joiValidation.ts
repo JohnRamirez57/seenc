@@ -106,6 +106,13 @@ export const createQuestionSchema = Joi.object({
     season_number: Joi.number().integer()
 })
 
+export const askQuestionSchema = Joi.object({
+    tmdb_id: Joi.number().integer().min(1).required(),
+    unit_number: Joi.number().integer().min(-1).required(),
+    season_number: Joi.number().integer().min(1),
+    question: Joi.string().trim().min(3).max(500).required()
+})
+
 export const findQuestionsSchema = Joi.object({
     tmdb_id: Joi.number().integer().required().min(0),
     unit_number: Joi.number().integer().required(),

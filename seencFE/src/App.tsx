@@ -26,7 +26,7 @@ declare global {
 const pageTitles: Record<ScenePage, string> = {
   discover: 'Join the bandwagon.', // discover should display trending media, prob need to update tmdb service
   library: 'View your commitments.',
-  chats: 'Revisit your inquiries.',
+  chats: 'Revisit your questions.',
   search: 'What\'s on your mind?',
 }
 

@@ -30,6 +30,12 @@ export interface ChatMessage {
     }
   }
 }
+export interface AskQuestionResponse {
+  question_id: number
+  answer: string
+  sources: Array<{ title: string; url: string }>
+  boundary: { media_type: string; season_number?: number; unit_number: number }
+}
 interface SearchResult {
   id: number; title?: string; name?: string; media_type: string; overview?: string;
   poster_path?: string; backdrop_path?: string; release_date?: string; first_air_date?: string; popularity?: number;
@@ -85,6 +91,8 @@ export async function search(query: string, signal?: AbortSignal): Promise<Media
 }
 export function message(error: unknown) {
   if (axios.isAxiosError(error)) {
+    const serverMessage = error.response?.data?.error
+    if (typeof serverMessage === 'string' && serverMessage.length <= 240) return serverMessage
     if (error.response?.status === 401 || error.response?.status === 403) return 'Please sign in again to continue.'
     if (error.response?.status === 409) return 'This conflicts with your current session or library. Refresh and try again.'
     if (error.response?.status === 400) return 'Please check your entries and try again.'
