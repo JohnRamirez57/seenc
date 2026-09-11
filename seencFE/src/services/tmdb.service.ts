@@ -13,10 +13,13 @@ export class TMDBService {
     private readonly getSeasonDetailsURL = "https://api.themoviedb.org/3/tv/%d/season/%d"
     private readonly getTVEpisodeDetailsURL = "https://api.themoviedb.org/3/tv/{series_id}/season/{season_number}/episode/{episode_number}"
     private readonly getMovieCreditsURL = `/credits` // getMovieDetails + ${movie_id} + getMovieCreditsURL
+    private readonly getTrendingURL = "https://api.themoviedb.org/3/trending/{media_type}/{time_window}"
+    private readonly getPopularURL = "https://api.themoviedb.org/3/{media_type}/popular?page={page_number}"
     private readonly profilePathing = "https://image.tmdb.org/t/p/"
     private readonly profileSize = "original"
     private readonly STARTING_API_TOKENS = 40;
     private readonly MAX_API_CALLS_PER_SECOND = 45;
+    private readonly PAGE_NUMBER_LIMIT = 5;
     private readonly limiter: TokenBucket = new TokenBucket(this.STARTING_API_TOKENS, this.MAX_API_CALLS_PER_SECOND);
 
     public async makeTMDBRequest(formattedURL: string, params: any): Promise<AxiosResponse> {
@@ -26,6 +29,29 @@ export class TMDBService {
         })
 
         return resp;
+    }
+
+    public async searchTrending(window_time: string) {
+        const trendingTVURLs: string[] = [];
+        for (let pageNum = 1; pageNum <= this.PAGE_NUMBER_LIMIT; pageNum++){
+            trendingTVURLs.push(this.getPopularURL.replace("{media_type}", "tv").replace("{page_number}", String(pageNum)), this.getPopularURL.replace("{media_type}", "movie").replace("{page_number}", String(pageNum)));
+        }
+
+        // console.error("Trending URLs: ", trendingTVURLs)
+
+        trendingTVURLs.push(this.getTrendingURL.replace("{media_type}", "all").replace("{time_window}", window_time))
+        
+        const res = (await Promise.allSettled(trendingTVURLs.map((url) => axios.get(url, { params: { api_key: process.env.TMDBKEY } }))))
+        // console.error(res)
+        return res.flatMap((promise, index) => {
+                if (promise.status !== "fulfilled") return [];
+
+                const mediaType = trendingTVURLs[index].includes("/tv/") ? "tv" : "movie";
+                return [{...promise.value.data, results: promise.value.data.results?.map((entry: any) => ({...entry, media_type: entry.media_type ?? mediaType })) ?? [],
+                }];
+            });
+
+        // return axios.get(this.getTrendingURL.replace("{media_type}", "all").replace("{time_window}", window_time), { params: { api_key: process.env.TMDBKEY } })
     }
 
     public async searchMedia(query: any, pageNumber: number = 1) {

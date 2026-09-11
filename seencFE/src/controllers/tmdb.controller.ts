@@ -2,10 +2,10 @@ import type { Request, Response } from "express";
 import { TMDBService } from "../services/tmdb.service.ts";
 import type { AxiosResponse } from "axios";
 import { extractSuccessfulResponses, formatMultiResults, formatPosterPathing } from "../utils/format.util.ts";
-import type { EpisodeDetails, MovieCredit, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
+import type { EpisodeDetails, retrievedMedia, RetrievedMovieCredits as retrievedMovieCredits, TVDetails } from "../interfaces/media.interfaces.ts";
 import { searchTMDBType, type searchFn } from "../interfaces/tmdb.interfaces.ts";
 import { handleError } from "../utils/error.util.ts";
-import { PrismaService } from "../services/prisma.service.ts";
+import type { Trending } from "../../client/api.ts";
 
 class TMDBController {
     private readonly tmdbService: TMDBService;
@@ -39,6 +39,19 @@ class TMDBController {
         }
     }
 
+    public searchTrending = async(req: Request, res: Response) => {
+        try {
+            const trending = await this.tmdbService.searchTrending(req.query.time_window as string)
+            console.error("Trending: ", trending)
+            res.status(200).json(trending)
+        } catch (error) {
+            console.error(error);
+            res.status(400).json({
+                error: "Failed to search trending media"
+            });
+        }
+    }
+
     public searchQuery = async(req: Request, res: Response) => {
         try {
             console.error(req.query)
@@ -57,7 +70,7 @@ class TMDBController {
             res.json(returnedResults.data)
         } catch (error) {
             console.error(error);
-            res.status(500).json({
+            res.status(400).json({
                 error: "Failed to search media"
             });
         }
@@ -85,7 +98,7 @@ class TMDBController {
             res.json(returnedTVDetails.data)
         } catch (error) {
             console.error(error)
-            res.status(200).json({
+            res.status(400).json({
                 error: handleError(error)
             })
         }
@@ -99,7 +112,7 @@ class TMDBController {
             res.json(returnedEpisodeDetails.data)
         } catch (error) {
             console.error(error)
-            res.status(200).json({
+            res.status(400).json({
                 error: handleError(error)
             })
         }
@@ -118,7 +131,7 @@ class TMDBController {
             res.json(episodeDetails.map(result => result.value.data))
         } catch (error) {
             console.error(error)
-            res.status(200).json({
+            res.status(400).json({
                 error: handleError(error)
             })
         }

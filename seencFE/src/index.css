@@ -1,1 +1,95 @@
 @import "tailwindcss";
+:root {
+  @apply bg-[#141616] text-[#eeeade];
+  font-family: Arial, Helvetica, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  color-scheme: dark;
+  font-weight: 400;
+}
+* {
+  @apply box-border;
+}
+body {
+  @apply m-0;
+}
+button,
+a,
+input,
+select,
+textarea {
+  @apply [-webkit-tap-highlight-color:transparent];
+}
+button,
+a {
+  @apply touch-manipulation transition-[background-color,color,transform] duration-200;
+}
+button {
+  @apply cursor-pointer border border-[#555751] bg-transparent px-[17px] py-[11px] text-inherit font-[inherit];
+}
+button:disabled {
+  @apply cursor-default opacity-50;
+}
+a {
+  @apply text-inherit no-underline;
+}
+button:hover:not(:disabled) {
+  @apply border-[#f1ebdc];
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  @apply outline-3 outline-[#fac76d] outline-offset-[5px];
+}
+input,
+select,
+textarea {
+  @apply w-full border border-[#676963] bg-[#1b1e1e] p-[13px] text-[#eeeade] font-[inherit];
+}
+label {
+  @apply grid gap-[9px] text-[14px];
+}
+h1,
+h2,
+h3,
+p {
+  @apply m-0;
+}
+p {
+  @apply leading-[1.65];
+}
+h1,
+h2,
+h3 {
+  font-family: Impact, "Arial Narrow", Haettenschweiler, sans-serif;
+  font-stretch: condensed;
+  font-weight: 800;
+  line-height: 1.02;
+}
+::selection {
+  background: #f26b4f;
+  color: #101313;
+}
+.skip {
+  position: fixed;
+  left: 16px;
+  top: -100px;
+  z-index: 100;
+  background: #f0eadc;
+  color: #141616;
+  padding: 15px;
+}
+.skip:focus {
+  top: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

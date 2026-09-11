@@ -1,13 +1,585 @@
-@import "tailwindcss";
-body{
-  background-color: black;
+@reference "tailwindcss";
+
+.header {
+  @apply sticky top-0 z-[100] flex min-h-[92px] items-center gap-[60px] border-b border-[#363933] bg-[#141616]/80 px-[4.5%] py-0;
 }
 
-@utility mediaBanner {
-    @apply bg-blue-600 text-white font-light m-auto p-1 transition-all duration-500 hover:bg-blue-700 hover:cursor-pointer hover:text-green-300;
+.scene-trigger .trigger-bars-plus {
+  transition: transform 0.55s ease-in-out;
+  transform: rotate(0deg) scale(1);
+  transform-origin: center center;
 }
 
-@utility savedMediaEntry {
-  @apply hover:bg-red-600 hover:cursor-pointer hover:text-white hover:underline relative
+.scene-trigger:hover .trigger-bars-plus {
+  transform: rotate(-360deg) scale(2);
 }
 
+.brand {
+  @apply text-[36px] font-black tracking-[-3px];
+}
+.brand span {
+  @apply text-[#f26b4f];
+}
+.nav {
+  @apply flex gap-[34px] self-stretch;
+}
+.nav a {
+  @apply relative flex items-center gap-[9px] text-[14px] text-[#aeb0a8];
+}
+.nav small {
+  @apply text-[9px] text-[#a0a698];
+}
+.nav a[aria-current] {
+  @apply text-[#eeeade];
+}
+.nav a[aria-current]::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #f26b4f;
+  transform: skewX(-25deg);
+}
+.nav a:hover {
+  @apply -translate-y-0.5;
+}
+.account {
+  @apply ml-auto flex items-center gap-4 text-[13px];
+}
+.account > span {
+  @apply max-w-[140px] overflow-hidden text-ellipsis;
+}
+.account button {
+  @apply border-0;
+}
+.mobile-toggle {
+  @apply hidden;
+}
+main {
+  @apply mx-auto max-w-[1800px] px-[4.5%] py-0;
+}
+.page-heading {
+  @apply relative px-0 pb-[29px] pt-[39px];
+}
+.eyebrow {
+  @apply mb-[10px] text-[10px] font-bold leading-[1.5] tracking-[2.5px] text-[#b7b9ae];
+}
+.page-heading h1 {
+  @apply font-sans text-[24px] leading-[1.2] tracking-[-0.8px];
+}
+.edition {
+  @apply absolute bottom-8 right-0 text-[9px] tracking-[2px] text-[#a1aa99];
+}
+.hero {
+  @apply relative min-h-[490px] overflow-hidden bg-[#252d29];
+  isolation: isolate;
+}
+.hero-art {
+  @apply absolute inset-0 -z-[2];
+}
+.hero-art img {
+  @apply h-full w-full object-cover;
+  object-position: center 35%;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 17, 15, 0.98),
+    rgba(10, 17, 15, 0.75) 38%,
+    rgba(10, 17, 15, 0.06) 85%
+  );
+}
+.hero-copy {
+  @apply w-[65%] max-w-[650px] px-[5%] py-[54px];
+}
+.hero-copy .eyebrow {
+  @apply text-[#f6e9d1];
+}
+.hero-copy .eyebrow span {
+  @apply ml-[15px] text-[#f26b4f];
+}
+.hero-copy h2 {
+  @apply text-[clamp(48px,6.5vw,102px)] uppercase tracking-[-2px] [overflow-wrap:anywhere];
+}
+.hero-copy > p:not(.eyebrow) {
+  @apply my-[23px] max-w-[365px] text-[14px] text-[#d7d9cd];
+}
+.hero-actions {
+  @apply flex flex-wrap gap-[10px];
+}
+.primary {
+  @apply inline-block border border-[#f26b4f] bg-[#f26b4f] px-[23px] py-[14px] font-bold text-[#161a17];
+}
+.primary:hover:not(:disabled) {
+  @apply translate-x-[3px] bg-[#ff8b70];
+}
+.secondary {
+  @apply inline-block border border-[#95998e] bg-[#171d18aa] px-[23px] py-[14px] text-[14px];
+}
+.hero-foot {
+  @apply mt-[35px] block text-[8px] tracking-[2px] text-[#b6c1b5];
+}
+.hero-mark {
+  @apply absolute bottom-0 right-[2%] p-5 text-[#eeeade] opacity-50;
+  font-family: Impact, sans-serif;
+  font-size: 95px;
+  line-height: 0.83;
+  transform: skewY(-9deg);
+}
+.browse-bar {
+  @apply flex items-center gap-[28px] border-b border-[#363933] py-[23px] text-[12px];
+}
+.browse-bar > span {
+  @apply text-[#a8ad9f];
+}
+.browse-bar > a {
+  @apply ml-auto;
+}
+.filters {
+  @apply flex gap-2;
+}
+.filters button {
+  @apply border-transparent px-[17px] py-2 text-[12px];
+}
+.filters button[aria-pressed="true"] {
+  @apply bg-[#eeeade] text-[#171b17];
+}
+
+.section-heading {
+  @apply mb-[22px] flex items-end justify-between;
+}
+
+.section-heading h2 {
+  @apply font-sans text-[23px] tracking-[-0.8px];
+}
+
+.section-heading .eyebrow {
+  @apply text-[9px];
+}
+
+.shelf {
+  @apply my-[38px] mb-[48px] min-w-0;
+}
+
+.shelf-controls {
+  @apply flex gap-[7px];
+}
+
+.shelf-controls button {
+  @apply px-3 py-[7px];
+}
+
+.shelf-track {
+  @apply flex gap-[22px] overflow-x-auto px-[5px] pb-[18px] pt-[6px];
+  scroll-snap-type: x proximity;
+  margin: 0 -5px;
+  scrollbar-width: thin;
+  scrollbar-color: #565e51 transparent;
+}
+
+.media-card {
+  @apply min-w-0 shrink-0 snap-start border-0 p-0 text-left;
+  flex-basis: clamp(155px, 16.5vw, 240px);
+}
+
+.poster {
+  @apply relative aspect-[2/3] overflow-hidden bg-[#252b27];
+}
+
+.poster img {
+  @apply h-full w-full object-cover transition-transform duration-300;
+}
+
+.media-card:hover img {
+  @apply scale-[1.035];
+}
+
+.media-card:hover .card-open,
+.media-card:focus-visible .card-open {
+  @apply translate-x-0 opacity-100;
+}
+
+.card-index {
+  @apply absolute left-[10px] top-[10px] bg-[#161b17d9] px-[7px] py-[5px] text-[11px];
+}
+
+.card-open {
+  @apply absolute bottom-0 right-0 bg-[#f26b4f] px-[17px] py-3 text-[22px] text-[#161a17] opacity-0;
+  transform: translateX(100%);
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+
+.card-title {
+  @apply mt-[13px] block overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-bold;
+}
+
+.card-meta {
+  @apply mt-2 block text-[10px] uppercase tracking-[1px] text-[#b0b5a8];
+}
+
+.art-fallback {
+  @apply flex h-full flex-col justify-between bg-[#29322c] p-[15%] text-[#c9d1be];
+}
+
+.art-fallback strong {
+  @apply text-[clamp(18px,2vw,32px)] uppercase leading-[1.1] [overflow-wrap:anywhere];
+}
+
+.art-fallback span {
+  @apply text-[30px] font-black;
+}
+
+.art-fallback small {
+  @apply text-[8px] tracking-[2px];
+}
+.empty,
+.loading {
+  @apply border border-[#41483d] p-[35px] leading-[1.6] text-[#bdc6b5];
+}
+.empty button {
+  @apply m-[10px];
+}
+.loading {
+  animation: arrive 0.2s ease-out;
+}
+.notice {
+  @apply mb-5 flex items-center justify-between gap-5 border-l-[3px] border-[#f26b4f] bg-[#282d27] px-[18px] py-[14px] text-[13px];
+}
+.notice button {
+  @apply border-0 px-[10px] py-0 text-[22px];
+}
+.story-note {
+  @apply relative my-[50px] mb-[70px] flex items-center gap-[38px] border-y border-[#565c50] py-[42px];
+}
+
+.story-note > span:first-child {
+  @apply text-[100px] leading-none text-[#f26b4f];
+}
+.story-note h2 {
+  @apply font-sans text-[27px] leading-[1.15] tracking-[-1px];
+}
+.story-note p:last-child {
+  @apply mt-[17px] max-w-[510px] text-[13px] text-[#aab3a2];
+}
+.coming {
+  @apply ml-auto self-start text-[10px] tracking-[2px] text-[#f26b4f];
+}
+.search-form {
+  @apply py-[25px];
+}
+.search-form > div {
+  @apply mt-[15px] flex gap-[15px];
+}
+.search-form input {
+  @apply p-[22px] text-[22px];
+}
+.search-form button {
+  @apply shrink-0;
+}
+.library-welcome {
+  @apply mb-[60px] min-h-[380px] bg-[#242d26] px-[6%] py-[65px];
+}
+.library-welcome h2 {
+  @apply text-[56px];
+}
+.library-welcome p:not(.eyebrow) {
+  @apply my-[23px] text-[#c0c9b9];
+}
+footer {
+  @apply flex items-center gap-10 border-t border-[#363e31] px-[4.5%] py-8;
+}
+footer p {
+  @apply text-[12px] text-[#b5c0aa];
+}
+footer small {
+  @apply ml-auto max-w-[300px] text-[9px] text-[#a8b39d];
+}
+dialog {
+  @apply max-h-[90dvh] w-[calc(100%-32px)] max-w-[780px] border border-[#6b7464] bg-[#1b201c] p-0 text-[#eeeade];
+  animation: arrive 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+dialog::backdrop {
+  background: #080c0bea;
+}
+.dialog-content {
+  @apply relative p-[42px];
+}
+.close {
+  @apply absolute right-3 top-[10px] z-[1] border-0 px-3 py-1 text-[26px];
+}
+.dialog-content > h2 {
+  @apply my-[20px] mb-[30px] text-[48px];
+}
+.details-top {
+  @apply grid grid-cols-[140px_1fr] items-center gap-7;
+}
+.detail-art {
+  @apply h-[210px];
+}
+.detail-art img {
+  @apply h-full w-full object-cover;
+}
+.details-top h2 {
+  @apply text-[40px] [overflow-wrap:anywhere];
+}
+.details-top .muted {
+  @apply my-[15px];
+}
+.muted {
+  @apply text-[13px] text-[#b1bbab];
+}
+.detail-section {
+  @apply mt-[27px] border-t border-[#48513f] pt-6;
+}
+.detail-section > p {
+  @apply mt-[15px];
+}
+.detail-section h3,
+.question-panel h3 {
+  @apply mb-3 font-sans text-[22px];
+}
+.text-button {
+  @apply border-0 px-0 py-[14px] text-left text-[#efc7ad];
+}
+.progress-fields {
+  @apply my-5 flex gap-3;
+}
+.progress-fields > label {
+  @apply min-w-0 flex-1;
+}
+.question-panel {
+  @apply mt-[26px] border-l-[3px] border-[#f26b4f] bg-[#30372d] p-6;
+}
+.question-panel p {
+  @apply my-[15px] text-[13px];
+}
+.question-panel textarea {
+  @apply mb-[15px] min-h-[85px];
+}
+.auth-form {
+  @apply grid gap-5;
+}
+.auth-form button {
+  @apply my-2;
+}
+.auth-form [role="alert"] {
+  @apply text-[#ffab96];
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate(22px, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@media (max-width: 900px) {
+  .header {
+    gap: 25px;
+  }
+  .nav {
+    gap: 20px;
+  }
+  .nav small {
+    display: none;
+  }
+  .edition {
+    display: none;
+  }
+  .hero-copy {
+    width: 75%;
+    padding: 45px 6%;
+  }
+  .hero {
+    min-height: 450px;
+  }
+  .story-note {
+    gap: 20px;
+  }
+  .coming {
+    display: none;
+  }
+  .account > span {
+    display: none;
+  }
+  .hero-mark {
+    font-size: 70px;
+  }
+}
+@media (max-width: 600px) {
+  .header {
+    min-height: 76px;
+    padding: 0 5%;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand {
+    font-size: 30px;
+  }
+  .mobile-toggle {
+    display: block;
+    margin-left: auto;
+    border: 0;
+    font-size: 13px;
+  }
+  .account {
+    margin-left: 0;
+  }
+  .account button {
+    padding: 10px;
+  }
+  .nav {
+    display: none;
+    order: 4;
+    flex-basis: 100%;
+    padding: 10px 0 20px;
+    gap: 25px;
+  }
+  .nav.open {
+    display: flex;
+    animation: arrive 0.18s ease-out;
+  }
+  .nav a {
+    padding: 10px 0;
+  }
+  .page-heading {
+    padding: 27px 0 22px;
+  }
+  .page-heading h1 {
+    font-size: 21px;
+  }
+  .hero {
+    min-height: 450px;
+  }
+  .hero-copy {
+    width: 100%;
+    padding: 35px 7%;
+  }
+  .hero-copy h2 {
+    font-size: 58px;
+    max-width: 90%;
+  }
+  .hero::after {
+    background: linear-gradient(90deg, #0a110fe8, #0a110f70);
+  }
+  .hero-copy > p:not(.eyebrow) {
+    max-width: 85%;
+  }
+  .hero-foot {
+    max-width: 70%;
+    line-height: 1.8;
+  }
+  .hero-mark {
+    font-size: 50px;
+    right: 0;
+  }
+  .hero-actions {
+    gap: 8px;
+  }
+  .primary,
+  .secondary {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .browse-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .browse-bar > span {
+    display: none;
+  }
+  .browse-bar > a {
+    font-size: 11px;
+  }
+  .filters {
+    gap: 0;
+  }
+  .filters button {
+    padding: 9px;
+  }
+  .section-heading h2 {
+    font-size: 20px;
+  }
+  .shelf-track {
+    gap: 14px;
+  }
+  .shelf {
+    margin: 30px 0;
+  }
+  .media-card {
+    flex-basis: 43vw;
+  }
+  .card-open {
+    opacity: 1;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 18px;
+  }
+  .story-note {
+    margin: 35px 0;
+    padding: 30px 0;
+    align-items: start;
+  }
+  .story-note > span:first-child {
+    font-size: 55px;
+  }
+  .story-note h2 {
+    font-size: 22px;
+  }
+  .search-form > div {
+    flex-direction: column;
+  }
+  .search-form input {
+    font-size: 17px;
+  }
+  .library-welcome {
+    padding: 40px 7%;
+  }
+  .library-welcome h2 {
+    font-size: 42px;
+  }
+  .dialog-content {
+    padding: 38px 22px 25px;
+  }
+  .details-top {
+    grid-template-columns: 90px 1fr;
+    gap: 17px;
+  }
+  .detail-art {
+    height: 135px;
+  }
+  .details-top h2 {
+    font-size: 28px;
+  }
+  .details-top .primary {
+    font-size: 12px;
+    padding: 10px;
+  }
+  .progress-fields {
+    flex-wrap: wrap;
+  }
+  .progress-fields label {
+    flex-basis: 30%;
+  }
+  footer {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer small {
+    margin: 0;
+    max-width: 100%;
+  }
+  .empty {
+    padding: 22px;
+  }
+}

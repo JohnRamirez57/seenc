@@ -48,6 +48,10 @@ export const searchQuerySchema = Joi.object({
     searchType: Joi.string().min(1).required()
 })
 
+export const searchTrendingSchema = Joi.object({
+    time_window: Joi.string().required().min(3).valid("week", "day")
+})
+
 export const getDetailsSchema = Joi.object({
     tmdb_id: Joi.number().integer().min(0).required()
 })

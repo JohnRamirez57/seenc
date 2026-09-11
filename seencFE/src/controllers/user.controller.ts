@@ -5,8 +5,6 @@ import { PrismaService } from "../services/prisma.service.ts";
 import { UserAccountService } from "../services/account.service.ts";
 import dotenv from "dotenv"
 import type { AuthenticatedRequest } from "../../../seencBE/backendMiddleware/jwtValidation.ts";
-import { error } from "console";
-import { watch_status } from "@prisma/client";
 import { MiscService } from "../services/misc.serivce.ts";
 
 dotenv.config()
@@ -98,7 +96,7 @@ class UserController {
             if (!(await this.miscService.updateProgressWatchStatus(user_id!, tmdb_id, ep_num, new_status, season_num))) {
                 return res.status(400).json({error: handleError})
             }
-            res.status(200)
+            return res.status(200).json({message: "Successfully updated watch status!"})
         } catch (error) {
             console.error(handleError(error))
             res.status(400).json({error: handleError(error)})
@@ -115,7 +113,7 @@ class UserController {
             if (!(await this.miscService.updateLastViewedProgress(user_id!, tmdb_id, ep_num, season_num))) {
                 return res.status(400).json({error: handleError})
             }
-            res.status(200)
+            return res.status(200).json({message: "Successfully updated last viewed progress!"})
         } catch (error) {
             console.error(handleError(error))
             res.status(400).json({error: handleError(error)})
@@ -138,6 +136,7 @@ class UserController {
             }
     
             await this.miscService.createUserProgress(user_id, tmdb_id, ep_num, season_num)
+            return res.status(200).json({message: "Successfully created user progress!"})
         } catch (error) {
             console.error(handleError(error))
             res.status(400).json({error: handleError(error)})

@@ -1,0 +1,141 @@
+import { useCallback, useEffect, useState } from 'react'
+import { getTrending } from '../../client/api'
+import type { Media } from '../../client/api'
+import { Artwork, Shelf } from '../components/Shelf'
+
+interface DiscoverPageProps {
+  active: boolean
+  signedIn: boolean
+  continuing: Media[]
+  onOpenMedia: (media: Media) => void
+  onCatalogLoaded: (media: Media[]) => void
+}
+
+export function DiscoverPage({
+  active, signedIn, continuing, onOpenMedia, onCatalogLoaded,
+}: DiscoverPageProps) {
+  const [catalog, setCatalog] = useState<Media[]>([])
+  const [filter, setFilter] = useState('ALL')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const loadCatalog = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true)
+    setError('')
+
+
+    const responses: Media[] = await getTrending(signal)
+    if (signal?.aborted) return
+
+    const media = []
+    let failed = false
+
+    media.push(...responses)
+
+    setCatalog(media)
+    onCatalogLoaded(media)
+    setLoading(false)
+    if (failed) {
+      setError(media.length ? 'Some collections could not load. Try again.' : 'The catalog is unavailable. Please try again shortly.')
+    }
+  }, [onCatalogLoaded])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadCatalog(controller.signal)
+    return () => controller.abort()
+  }, [loadCatalog])
+
+  useEffect(() => {
+    setFilter('ALL')
+  }, [active])
+
+  function filterMedia(items: Media[]) {
+    return items.filter(media => filter === 'ALL' || media.media_type === filter)
+  }
+
+  const filteredCatalog = filterMedia(catalog)
+  const newItems = filteredCatalog
+    .toSorted((a, b) => (b.release_date || '').localeCompare(a.release_date || ''))
+    .slice(0, 10)
+  const exploreItems = filteredCatalog.slice(10)
+
+  const hero = catalog.find(media => media.backdrop_url) || catalog[0]
+  const watchingLabels: Record<number, string> = {}
+  for (const media of continuing) {
+    watchingLabels[media.tmdb_id] = 'Watching / update progress'
+  }
+
+  function openFeaturedStory() {
+    if (hero) onOpenMedia(hero)
+    else location.hash = 'search'
+  }
+
+  return (
+    <>
+      <section className="hero" aria-label="Featured story">
+        {hero && <div className="hero-art"><Artwork key={hero.tmdb_id} media={hero} hero /></div>}
+        <div className="hero-copy">
+          <p className="eyebrow">WHAT'S THE NEW HYPE <span>/ 01</span></p>
+          <h2>{hero?.title || 'Stay in the story.'}</h2>
+          <p>
+            {hero
+              ? `${hero.description.slice(0, 220)}${hero.description.length > 220 ? '…' : ''}`
+              : 'Media you may recognize. Questions you may have. Clarity we can provide. A place to keep your story going, without spoilers.'
+            }
+          </p>
+          <div className="hero-actions">
+            <button className="primary" onClick={openFeaturedStory}>
+              {hero ? 'Explore story ↗' : 'Find a story ↗'}
+            </button>
+            <a className="secondary" href="#library">My library +</a>
+          </div>
+          <span className="hero-foot">DISCOVER / SAVE / PICK UP WHERE YOU LEFT OFF</span>
+        </div>
+        {/* <span className="hero-mark" aria-hidden="true">SC<br />/01</span> */}
+      </section>
+
+      <div className="browse-bar">
+        <span>What's the mood?</span>
+        <div className="filters" aria-label="Filter media">
+          <button aria-pressed={filter === 'ALL'} onClick={() => { setFilter('ALL');}}>Everything</button>
+          <button aria-pressed={filter === 'MOVIE'} onClick={() => { setFilter('MOVIE');}}>Films</button>
+          <button aria-pressed={filter === 'TV'} onClick={() => { setFilter('TV');}}>Series</button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="empty" role="status">
+          {error} <button onClick={() => loadCatalog()}>Retry catalog</button>
+        </div>
+      )}
+      {loading && !catalog.length && <div className="loading" role="status">Loading story collections…</div>}
+      {signedIn && (
+        <Shelf title="Continue watching" subtitle="BACK TO YOUR WORLD"
+          items={filterMedia(continuing)} open={onOpenMedia} status={watchingLabels} />
+      )}
+      {catalog.length > 0 && (
+        <div className='flex w-full min-w-0 flex-col overflow-hidden' aria-label='discover-shelf-div'>
+          <div className={filter === 'TV' ? 'w-full min-w-0 translate-y-full transition-transform duration-500 ease-in-out' : 'w-full min-w-0 transition-transform duration-500 ease-in-out'} aria-label='new-shelf'>
+          <Shelf title="What's new" subtitle="SEE WHAT'S TRENDING"
+            items={newItems} open={onOpenMedia} />
+          </div>
+          <div className={filter === 'TV' ? 'w-full min-w-0 -translate-y-full transition-transform duration-500 ease-in-out' : 'w-full min-w-0 transition-transform duration-500 ease-in-out'} aria-label='explore-shelf'>
+          <Shelf title="Keep exploring" subtitle="DON'T BE AFRAID TO GO DEEPER"
+            items={exploreItems} open={onOpenMedia} />
+          </div>
+        </div>
+      )}
+
+      {/* <aside className="story-note">
+        <span aria-hidden="true">↗</span>
+        <div>
+          <p className="eyebrow">A LITTLE FURTHER INTO THE STORY</p>
+          <h2>Your questions can wait.<br />Your curiosity shouldn’t have to.</h2>
+          <p>Spoiler-aware questions are the next chapter for Seenc. For now, make room for the stories you love.</p>
+        </div>
+        <span className="coming">IN DEVELOPMENT</span>
+      </aside> */}
+    </>
+  )
+}
