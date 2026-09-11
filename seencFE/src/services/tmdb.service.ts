@@ -5,6 +5,12 @@ import { createSearchParamsObject } from '../utils/param.util.ts';
 import { TokenBucket } from "../apiBucket/Bucket.ts"
 import { extractSuccessfulResponses } from '../utils/format.util.ts';
 
+interface GeminiCorrectionResponse {
+    candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+    }>;
+}
+
 export class TMDBService {
     private readonly searchMovieURL = "https://api.themoviedb.org/3/search/movie"
     private readonly getMovieDetailsURL = "https://api.themoviedb.org/3/movie/"
@@ -60,18 +66,70 @@ export class TMDBService {
     }
 
     public async searchMedia(query: any, pageNumber: number = 1) {
-        const cleanParams: searchParams = createSearchParamsObject(query, pageNumber);
-        return this.makeTMDBRequest(this.searchMultiURL, cleanParams)
+        return this.searchWithCorrection(this.searchMultiURL, query, pageNumber)
     }
 
     public async searchTV(query: any, pageNumber: number = 1) {
-        const cleanParams: searchParams = createSearchParamsObject(query, pageNumber)
-        return this.makeTMDBRequest(this.searchTVURL, cleanParams)
+        return this.searchWithCorrection(this.searchTVURL, query, pageNumber)
     }
 
     public async searchMovies(query: any, pageNumber: number = 1) {
-        const cleanParams: searchParams = createSearchParamsObject(query, pageNumber);
-        return this.makeTMDBRequest(this.searchMovieURL, cleanParams)
+        return this.searchWithCorrection(this.searchMovieURL, query, pageNumber)
+    }
+
+    private async searchWithCorrection(url: string, query: unknown, pageNumber: number) {
+        const originalQuery = String(query ?? "").trim();
+        const cleanParams: searchParams = createSearchParamsObject(originalQuery, pageNumber);
+        const response = await this.makeTMDBRequest(url, cleanParams);
+
+        if (response.data.results?.length || originalQuery.length < 3) {
+            return response;
+        }
+
+        const correctedQuery = await this.correctSearchQuery(originalQuery);
+        if (correctedQuery.toLowerCase() === originalQuery.toLowerCase()) return response;
+
+        return this.makeTMDBRequest(url, createSearchParamsObject(correctedQuery, pageNumber));
+    }
+
+    private async correctSearchQuery(query: string): Promise<string> {
+        if (!process.env.GEMINI_API_KEY) return query;
+        const key = cacheKey("title-correction", query.toLowerCase());
+
+        try {
+            return await remember(key, 24 * 60 * 60, async () => {
+                const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+                const response = await axios.post<GeminiCorrectionResponse>(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+                    {
+                        contents: [{
+                            role: "user",
+                            parts: [{
+                                text: `Correct this possibly misspelled movie or TV title: <title>${query}</title>\nReturn only the corrected title. If it is not clearly a title or no correction is needed, return it unchanged.`,
+                            }],
+                        }],
+                        generationConfig: { temperature: 0, maxOutputTokens: 40 },
+                    },
+                    {
+                        params: { key: process.env.GEMINI_API_KEY },
+                        headers: { "Content-Type": "application/json" },
+                        timeout: 10_000,
+                    },
+                );
+
+                const correction = response.data.candidates?.[0]?.content?.parts
+                    ?.map(part => part.text || "")
+                    .join("")
+                    .split(/\r?\n/, 1)[0]
+                    .replace(/^corrected title:\s*/i, "")
+                    .replace(/^["'`]|["'`]$/g, "")
+                    .trim();
+
+                return correction && correction.length <= 120 ? correction : query;
+            });
+        } catch {
+            return query;
+        }
     }
 
     public async getMovieDetails(params: detailsParams){

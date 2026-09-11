@@ -60,7 +60,12 @@ export function cacheKey(namespace: string, input: unknown) {
 }
 
 const pending = new Map<string, Promise<unknown>>();
-export async function remember<T>(key: string, ttlSeconds: number, load: () => Promise<T>): Promise<T> {
+export async function remember<T>(
+    key: string,
+    ttlSeconds: number,
+    load: () => Promise<T>,
+    cacheEmpty = true,
+): Promise<T> {
     const existing = pending.get(key);
     if (existing) return structuredClone(await existing) as T;
     const request = (async () => {
@@ -70,7 +75,9 @@ export async function remember<T>(key: string, ttlSeconds: number, load: () => P
             catch { await deleteRedisValue(key); }
         }
         const value = await load();
-        await setRedisValue(key, JSON.stringify(value), ttlSeconds);
+        if (cacheEmpty || (value !== null && value !== undefined)) {
+            await setRedisValue(key, JSON.stringify(value), ttlSeconds);
+        }
         return value;
     })();
     pending.set(key, request);

@@ -5,8 +5,10 @@ import { prisma } from "../prismaClient/prisma";
 import { formatPosterPathing } from "../utils/format.util";
 import { validateEmail } from "../utils/validate.util";
 import { TMDBService } from "./tmdb.service";
+import { cacheKey, remember } from "./redis.service.ts";
 import bcrypt from 'bcrypt';
 const saltRounds = 10;
+const DATABASE_LOOKUP_TTL = 5 * 60;
 
 export class PrismaService {
     private readonly prismaClient = prisma;
@@ -220,40 +222,52 @@ export class PrismaService {
     }
 
     public findMedia = async (tmdbId: number) => {
-        return prisma.media.findUnique({
-            where: {
-                tmdb_id: tmdbId
-            }
-        })
+        const key = cacheKey("db:media", { tmdbId });
+        return remember(key, DATABASE_LOOKUP_TTL, () =>
+            prisma.media.findUnique({
+                where: {
+                    tmdb_id: tmdbId
+                }
+            }),
+            false,
+        )
     }
 
     public findMediaUnit = async (tmdb_id: number, unit_number: number, checkAsMovie: boolean = false, season_id?: number) => {
-        if (checkAsMovie){
-            return prisma.media_unit.findFirst({
-            where: {
-                tmdb_id: tmdb_id,
-                season_id: null
+        const key = cacheKey("db:media-unit", {
+            tmdb_id,
+            unit_number,
+            checkAsMovie,
+            season_id: season_id ?? null,
+        });
+        return remember(key, DATABASE_LOOKUP_TTL, async () => {
+            if (checkAsMovie){
+                return prisma.media_unit.findFirst({
+                    where: {
+                        tmdb_id: tmdb_id,
+                        season_id: null
+                    }
+                })
             }
-        })
-        }
 
-        if (season_id && season_id != -1) { // if precision matters
+            if (season_id && season_id != -1) { // if precision matters
+                return prisma.media_unit.findFirst({
+                    where: {
+                        tmdb_id: tmdb_id,
+                        unit_number: unit_number, // episode number
+                        season_id: season_id
+                    }
+                })
+            }
+
+            // for non-movies (tv in particular)
             return prisma.media_unit.findFirst({
                 where: {
                     tmdb_id: tmdb_id,
-                    unit_number: unit_number, // episode number
-                    season_id: season_id
+                    unit_number: unit_number // episode number
                 }
             })
-        }
-
-        // for non-movies (tv in particular)
-        return prisma.media_unit.findFirst({
-            where: {
-                tmdb_id: tmdb_id,
-                unit_number: unit_number // episode number
-            }
-        })
+        }, false)
     }
 
     public createCharacterAppearance = async (unit_id: number, character_id: number) => {
@@ -442,12 +456,16 @@ export class PrismaService {
     }
 
     public findTVSeason = async (media_id: number, season_number: number) => {
-        return prisma.seasons.findFirst({
-            where: {
-                media_id: media_id,
-                season_number: season_number
-            }
-        })
+        const key = cacheKey("db:season", { media_id, season_number });
+        return remember(key, DATABASE_LOOKUP_TTL, () =>
+            prisma.seasons.findFirst({
+                where: {
+                    media_id: media_id,
+                    season_number: season_number
+                }
+            }),
+            false,
+        )
     }
 
     // public getOrCreateTVMediaUnitBySeason = async (tmdb_id: number, season_number: number) => {
