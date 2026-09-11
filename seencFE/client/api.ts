@@ -12,6 +12,24 @@ export interface Media {
 
 export interface Saved { tmdb_id: number; title: string }
 export interface Progress { status: string; last_viewed?: string; current_unit_id?: number }
+export interface ChatMessage {
+  id: number
+  title?: string
+  question: string
+  answer?: string
+  created_at: string
+  media_unit: {
+    unit_number: number
+    title: string
+    seasons?: { season_number: number } | null
+    media: {
+      tmdb_id: number
+      title: string
+      media_type: string
+      poster_url?: string
+    }
+  }
+}
 interface SearchResult {
   id: number; title?: string; name?: string; media_type: string; overview?: string;
   poster_path?: string; backdrop_path?: string; release_date?: string; first_air_date?: string; popularity?: number;

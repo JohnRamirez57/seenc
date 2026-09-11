@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from './toolkit/store/store'
 import type { Media } from '../client/api'
@@ -10,6 +10,7 @@ import { Details } from './components/Details'
 import { DiscoverPage } from './pages/DiscoverPage'
 import { SearchPage } from './pages/SearchPage'
 import { LibraryPage } from './pages/LibraryPage'
+import { ChatsPage } from './pages/ChatsPage'
 import { useLibrary } from './hooks/useLibrary'
 import './App.css'
 import './menu.css'
@@ -25,12 +26,14 @@ declare global {
 const pageTitles: Record<ScenePage, string> = {
   discover: 'Join the bandwagon.', // discover should display trending media, prob need to update tmdb service
   library: 'View your commitments.',
+  chats: 'Revisit your questions.',
   search: 'What\'s on your mind?',
 }
 
 function readPage(): ScenePage {
   if (location.hash === '#library') return 'library'
   if (location.hash === '#search') return 'search'
+  if (location.hash === '#chats') return 'chats'
   return 'discover'
 }
 
@@ -114,6 +117,14 @@ function App() {
             onRefresh={refreshLibrary}
             onSignIn={openSignIn}
             onOpenMedia={setSelectedMedia}
+          />
+        </div>
+        <div hidden={page !== 'chats'}>
+          <ChatsPage
+            active={page === 'chats'}
+            signedIn={auth.isAuthenticated}
+            library={library}
+            onSignIn={openSignIn}
           />
         </div>
       </main>

@@ -54,6 +54,10 @@ export class InquisitionService {
         return questionUnits;
     }
 
+    public findLibraryQuestions = async (user_id: number) => {
+        return this.prisma.findLibraryQuestionUnits(user_id)
+    }
+
     public findKnowledgeUnit = async (tmdb_id: number, unit_number: number, season_number?: number) => {
         const checkAsMovie = unit_number == -1;
         const season_id = season_number ? await this.retrieveSeasonID(season_number, tmdb_id) : season_number;

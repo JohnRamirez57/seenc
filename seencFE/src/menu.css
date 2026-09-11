@@ -200,6 +200,10 @@
   margin-left: 0;
   transform: rotate(-3deg);
 }
+.scene-options a:nth-child(4) {
+  margin-left: 23px;
+  transform: rotate(-1deg);
+}
 .option-title {
   font:
     64px/0.95 Impact,

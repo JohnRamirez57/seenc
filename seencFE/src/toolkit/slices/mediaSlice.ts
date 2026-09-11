@@ -1,12 +1,12 @@
 // authSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import type {PayloadAction} from "@reduxjs/toolkit"
-import type { movieOrTvResult } from "../../interfaces/media.interfaces.ts";
+import type { Media } from "../../../client/api.ts";
 import type { savedEntry } from '../../interfaces/user.interfaces.ts'
 
 interface MediaState {
   savedMedia: savedEntry[],
-  searchedMedia: movieOrTvResult[],
+  searchedMedia: Media[],
 }
 
 const initialState: MediaState = {
@@ -31,7 +31,7 @@ const mediaSlice = createSlice({
         state.savedMedia = state.savedMedia.filter((entry: savedEntry) => entry.tmdb_id !== action.payload.tmdb_id);
     },
 
-    updateSearchedMedia: (state, action: PayloadAction<movieOrTvResult[]>) => {
+    updateSearchedMedia: (state, action: PayloadAction<Media[]>) => {
         state.searchedMedia = action.payload;
     }
   }

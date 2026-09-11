@@ -72,6 +72,46 @@ export class PrismaService {
         })
     }
 
+    public findLibraryQuestionUnits = async (user_id: number) => {
+        return prisma.questions.findMany({
+            where: {
+                user_id,
+                media_unit: {
+                    media: {
+                        user_media: {
+                            some: { user_id }
+                        }
+                    }
+                }
+            },
+            select: {
+                id: true,
+                title: true,
+                question: true,
+                answer: true,
+                created_at: true,
+                media_unit: {
+                    select: {
+                        unit_number: true,
+                        title: true,
+                        seasons: {
+                            select: { season_number: true }
+                        },
+                        media: {
+                            select: {
+                                tmdb_id: true,
+                                title: true,
+                                media_type: true,
+                                poster_url: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        })
+    }
+
     public createKnowledgeUnit = async (unit_id: number, category: knowledge_category, content: string) => {
         return prisma.knowledge.create({
             data: {

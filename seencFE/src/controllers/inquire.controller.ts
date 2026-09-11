@@ -58,6 +58,19 @@ class InquireController {
         }
     }
 
+    public findLibraryQuestions = async (req: AuthenticatedRequest, res: Response) => {
+        try {
+            const user_id = req.user?.userID;
+            if (!user_id) return res.status(401).json({error: "Authenticated user not found"})
+
+            const questions = await this.inquireService.findLibraryQuestions(user_id)
+            res.status(200).json(questions)
+        } catch (error) {
+            console.error(error)
+            res.status(400).json({error: handleError(error)})
+        }
+    }
+
     public createQuestion = async (req: AuthenticatedRequest, res: Response) => {
         try {
             const user_id = req.user?.userID

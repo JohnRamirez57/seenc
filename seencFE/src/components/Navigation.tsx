@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from 'react'
 
-export type ScenePage = 'discover' | 'library' | 'search'
+export type ScenePage = 'discover' | 'library' | 'chats' | 'search'
 
 interface Destination {
   id: ScenePage
@@ -36,8 +36,15 @@ const destinations: Destination[] = [
     detail: 'Your collection, your progress, and the stories waiting for your return.',
   },
   {
-    id: 'search',
+    id: 'chats',
     number: '03',
+    label: 'My Chats',
+    line: 'Every question has a place.',
+    detail: 'Return to the conversations connected to the stories in your library.',
+  },
+  {
+    id: 'search',
+    number: '04',
     label: 'Search',
     line: 'Let curiosity lead.',
     detail: 'Find the film or series you can’t stop thinking about.',

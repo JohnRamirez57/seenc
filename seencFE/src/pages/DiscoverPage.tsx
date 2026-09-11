@@ -23,20 +23,17 @@ export function DiscoverPage({
     setLoading(true)
     setError('')
 
-
-    const responses: Media[] = await getTrending(signal)
-    if (signal?.aborted) return
-
-    const media = []
-    let failed = false
-
-    media.push(...responses)
-
-    setCatalog(media)
-    onCatalogLoaded(media)
-    setLoading(false)
-    if (failed) {
-      setError(media.length ? 'Some collections could not load. Try again.' : 'The catalog is unavailable. Please try again shortly.')
+    try {
+      const media: Media[] = await getTrending(signal)
+      if (signal?.aborted) return
+      setCatalog(media)
+      onCatalogLoaded(media)
+    } catch {
+      if (!signal?.aborted) {
+        setError('The catalog is unavailable. Please try again shortly.')
+      }
+    } finally {
+      if (!signal?.aborted) setLoading(false)
     }
   }, [onCatalogLoaded])
 

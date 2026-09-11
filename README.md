@@ -28,6 +28,8 @@ The frontend uses **React, TypeScript, Redux Toolkit, Tailwind CSS, and Vite**.
 
 Current frontend work is focused on authentication state and connecting the UI to the backend. The larger interface will be developed once the core backend behavior is stable.
 
+The current interface also includes a **My Chats** archive. Signed-in users can browse question-and-answer history for titles that remain in their library, search by title, filter by media type or existing history, and use arrow keys to move through the chat list.
+
 ## Project Vision
 
 The final goal is for Seenc to support **TV shows, movies, and books** through a personalized media library with detailed progress tracking.
